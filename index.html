@@ -7,6 +7,24 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <section id="project-home" class="project-home">
+      <div class="home-content">
+        <span class="eyebrow">GHOSTWRITER</span>
+        <h1>Your next story starts here.</h1>
+        <p class="home-subtitle">Open a project or give a new idea some room.</p>
+        <div class="home-actions">
+          <button class="share-button" data-template="empty">+ New Empty Project</button>
+          <button id="home-open">Open Project…</button>
+          <button id="home-resume" hidden>Return to project</button>
+        </div>
+        <div class="home-columns">
+          <section><h2>Recent projects</h2><div id="recent-projects"></div></section>
+          <section><h2>Start from a template</h2>
+            <div id="project-templates"></div>
+          </section>
+        </div>
+      </div>
+    </section>
     <div class="app-shell">
       <header class="topbar">
         <div class="brand">
