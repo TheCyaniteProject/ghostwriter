@@ -1,10 +1,30 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
+const { validateProject } = require('./project-validation');
 
 const isDev = process.argv.includes('--dev');
 const frontendFiles = ['index.html', 'styles.css', 'renderer.js', 'preload.js'];
 let projectPath = null;
+ipcMain.on('project:validate', (event, project) => {
+  try { validateProject(project);event.returnValue=null; } catch(error){event.returnValue=error.message;}
+});
+function isTemplate(file) {
+  return file && templateDirs().some(dir => { const relative=path.relative(dir,file);return relative!==''&&!relative.startsWith('..')&&!path.isAbsolute(relative); });
+}
+ipcMain.on('project:autosave', (event, project) => {
+  try {
+    if (!projectPath || isTemplate(projectPath)) { event.returnValue={saved:false}; return; }
+    validateProject(project);
+    const temporary=projectPath+'.tmp';
+    fs.writeFileSync(temporary,JSON.stringify(project,null,2)+'\n');
+    fs.renameSync(temporary,projectPath);
+    event.returnValue={saved:true};
+  } catch(error) { event.returnValue={saved:false,error:error.message}; }
+});
+async function prepareChange(sender) {
+  return sender.executeJavaScript('window.prepareProjectChange ? window.prepareProjectChange() : true');
+}
 const templateDirs = () => [path.join(__dirname, 'templates'), path.join(app.getPath('home'), 'Ghostwriter', 'Templates')];
 async function listTemplates() {
   const templates = [];
@@ -27,6 +47,8 @@ ipcMain.handle('project:template', async (event, file) => {
   try {
     if (!(await listTemplates()).some(template => template.path === file)) throw new Error('Template is no longer available.');
     const project = JSON.parse(await fs.promises.readFile(file, 'utf8'));
+    validateProject(project);
+    if (!await prepareChange(event.sender)) return;
     projectPath = null;
     event.sender.send('project:loaded', project);
   } catch (error) { dialog.showErrorBox('Could not open template', error.message); }
@@ -49,6 +71,8 @@ async function openProject(win, file) {
   }
   try {
     const project = JSON.parse(await fs.promises.readFile(file, 'utf8'));
+    validateProject(project);
+    if (!await prepareChange(win.webContents)) return;
     if (project.format !== 'ghostwriter' || !Array.isArray(project.nodes) || !Array.isArray(project.connections)) throw new Error('Invalid Ghostwriter project.');
     projectPath = file;
     await rememberProject(file, project);
@@ -56,7 +80,7 @@ async function openProject(win, file) {
   } catch (error) { dialog.showErrorBox('Could not load project', error.message); }
 }
 ipcMain.handle('project:recent', () => recentProjects());
-ipcMain.handle('project:new', () => { projectPath = null; });
+ipcMain.handle('project:new', async (event) => { if(!await prepareChange(event.sender))return false;projectPath = null;return true; });
 ipcMain.handle('project:open', (event, file) => openProject(BrowserWindow.fromWebContents(event.sender), file));
 
 function installMenu(win) {
@@ -122,12 +146,27 @@ function createWindow() {
     }
   });
 
+  win.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning',
+      title: 'Unsaved changes',
+      message: 'This project has changes that have not been saved.',
+      detail: 'Choose Cancel to return and save your work, or Discard Changes to continue.',
+      buttons: ['Cancel', 'Discard Changes'],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true
+    });
+    // In Electron, preventing this event allows the blocked unload to proceed.
+    if (choice === 1) event.preventDefault();
+  });
   win.loadFile('index.html');
   watchFrontend(win);
   installMenu(win);
 }
 
 ipcMain.handle('project:save', async (_event, { mode, project }) => {
+  validateProject(project);
   if (mode === 'template') {
     try {
       const directory = templateDirs()[1];
@@ -143,9 +182,16 @@ ipcMain.handle('project:save', async (_event, { mode, project }) => {
       return { canceled: true, error: error.message };
     }
   }
-  let target = mode === 'save' ? projectPath : null;
-  if (!target) {
-    const result = await dialog.showSaveDialog({ defaultPath: 'Untitled.ghostwriter', filters: [{ name: 'Ghostwriter Project', extensions: ['ghostwriter'] }] });
+  // Save on a new project (including a template copy) is Save As.
+  const useSaveAs = mode === 'save-as' || !projectPath || isTemplate(projectPath);
+  let target = useSaveAs ? null : projectPath;
+  if (useSaveAs) {
+    const name = (project.title || 'Untitled').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '_').slice(0, 100) || 'untitled';
+    const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(_event.sender), {
+      title: 'Save Project As',
+      defaultPath: projectPath && !isTemplate(projectPath) ? path.join(path.dirname(projectPath), name + '.ghostwriter') : name + '.ghostwriter',
+      filters: [{ name: 'Ghostwriter Project', extensions: ['ghostwriter'] }]
+    });
     if (result.canceled || !result.filePath) return { canceled: true };
     target = result.filePath.endsWith('.ghostwriter') ? result.filePath : `${result.filePath}.ghostwriter`;
   }

@@ -162,7 +162,7 @@ function showNodeMenu(node,x,y){
   const sourceAction=nodeMenu.querySelector('[data-action="set-source"]');sourceAction.hidden=node.type!=='arc'||node.id===sourceArcId;
   nodeMenu.querySelector('[data-action="delete"]').hidden=node.type!=='arc';
   nodeMenu.querySelector('[data-action="remove-connections"]').hidden=!['arc','reference'].includes(node.type);
-  const width=150,height=48;
+  const {width,height}=nodeMenu.getBoundingClientRect();
   nodeMenu.style.left=`${Math.min(x,window.innerWidth-width-8)}px`;
   nodeMenu.style.top=`${Math.min(y,window.innerHeight-height-8)}px`;
 }
@@ -208,7 +208,12 @@ function completeWire(node,port,targetNodeEl,targetPort,kind){
   const b=kind==='input'?{node:node.id,port:port.dataset.port}:{node:targetNodeEl.dataset.id,port:targetPort.dataset.port};
   const from=nodes.find(n=>n.id===a.node),to=nodes.find(n=>n.id===b.node);if(!from||!to||a.port!=='out')return;
   if(from.type==='arc'&&b.port!=='arc-in')return;if(from.type==='reference'&&!b.port.startsWith('ref-'))return;if(from.type===to.type&&from.type==='reference')return;
-  connections=connections.filter(c=>!(c.to.node===b.node&&c.to.port===b.port)&&!(c.from.node===a.node&&c.from.port===a.port));connections.push({id:uid('connection'),from:a,to:b,type:from.type});if(from.type==='reference')syncReferenceInputs(to.id);drawConnections();renderStoryPanel();
+  if(from.type==='arc'){
+    let cursor=to.id;const seen=new Set();
+    while(cursor&&!seen.has(cursor)){if(cursor===from.id)return;seen.add(cursor);cursor=connections.find(c=>c.type==='arc'&&c.from.node===cursor)?.to.node;}
+  }
+  const previousReferences=new Set(connections.filter(c=>c.type==='reference'&&c.from.node===a.node).map(c=>c.to.node));
+  connections=connections.filter(c=>!(c.to.node===b.node&&c.to.port===b.port)&&!(c.from.node===a.node&&c.from.port===a.port));connections.push({id:uid('connection'),from:a,to:b,type:from.type});if(from.type==='reference'){previousReferences.add(to.id);previousReferences.forEach(syncReferenceInputs)}drawConnections();renderStoryPanel();
 }
 
 function syncReferenceInputs(arcId){
@@ -254,7 +259,7 @@ function drawDraft(clientX,clientY){const a=pointFor(wiring.nodeId,wiring.port),
 function applyTransform(){const t=`translate(${pan.x}px,${pan.y}px) scale(${zoom})`;content.style.transform=t;document.querySelector('#connections').style.transform=t;document.querySelector('#zoom-label').textContent=`${Math.round(zoom*100)}%`;drawConnections();}
 
 function zoomAt(nextZoom,clientX,clientY){
-  const bounded=Math.max(.5,Math.min(1.5,nextZoom));if(bounded===zoom)return;
+  const bounded=Math.max(.1,Math.min(1.5,nextZoom));if(bounded===zoom)return;
   const r=board.getBoundingClientRect();
   const point={x:(clientX-r.left-pan.x)/zoom,y:(clientY-r.top-pan.y)/zoom};
   zoom=bounded;pan.x=clientX-r.left-point.x*zoom;pan.y=clientY-r.top-point.y*zoom;applyTransform();
@@ -297,9 +302,9 @@ function renderStoryPanel(){
   const groups=orderedArcGroups(),arcs=[...groups.connected,...groups.disconnected];let chapterNumber=0;
   const chapters=arcs.flatMap(arc=>actualChaptersForArc(arc).map((group,index)=>({...group,arc,index,id:`chapter-${chapterNumber++}`})));
   rail.innerHTML=chapters.map(chapter=>`<button data-chapter="${chapter.id}" title="${esc(chapter.name)}">${esc(chapter.name)}</button>`).join('');
-  reader.innerHTML=`<span class="reader-kicker">Manuscript</span><h2>The Last Lighthouse</h2>${chapters.length?chapters.map(chapter=>`<article class="story-chapter" id="${chapter.id}" data-arc-id="${chapter.arc.id}" data-chapter-index="${chapter.index}"><h3>${esc(chapter.name)}</h3><span class="chapter-arc">${esc(chapter.arc.title)}</span><p>${esc(chapter.content||'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to see them in your story.</p>'}`;
+  reader.innerHTML=`<span class="reader-kicker">Manuscript</span><h2>${esc(document.querySelector('.document-title input').value)}</h2>${chapters.length?chapters.map(chapter=>`<article class="story-chapter" id="${chapter.id}" data-arc-id="${chapter.arc.id}" data-chapter-index="${chapter.index}"><h3>${esc(chapter.name)}</h3><span class="chapter-arc">${esc(chapter.arc.title)}</span><p>${esc(chapter.content||'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to see them in your story.</p>'}`;
   document.querySelector('#focus-reader-nav').innerHTML=chapters.map(chapter=>`<button data-focus-chapter="focus-${chapter.id}">${esc(chapter.name)}</button>`).join('');
-  document.querySelector('#focus-reader-content').innerHTML=`<h1>The Last Lighthouse</h1>${chapters.length?chapters.map(chapter=>`<article class="focus-reader-chapter" id="focus-${chapter.id}"><h2>${esc(chapter.name)}</h2><span>${esc(chapter.arc.title)}</span><p>${esc(chapter.content||'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to begin reading.</p>'}`;
+  document.querySelector('#focus-reader-content').innerHTML=`<h1>${esc(document.querySelector('.document-title input').value)}</h1>${chapters.length?chapters.map(chapter=>`<article class="focus-reader-chapter" id="focus-${chapter.id}"><h2>${esc(chapter.name)}</h2><span>${esc(chapter.arc.title)}</span><p>${esc(chapter.content||'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to begin reading.</p>'}`;
   const renderArc=arc=>`<div class="outline-arc"><button class="outline-row outline-arc-row" data-focus-node="${arc.id}"><span class="outline-icon">${arc.id===sourceArcId?'★':'A'}</span>${esc(arc.title)}</button>${chaptersForArc(arc).map(chapter=>{const chapterId=chapters.find(item=>item.arc.id===arc.id&&item.name===chapter.name)?.id;return`${chapterId?`<button class="outline-row outline-chapter-row" data-open-chapter="${chapterId}"><span class="outline-icon">§</span>${esc(chapter.name)}</button>`:`<div class="outline-row outline-chapter-row"><span class="outline-icon">§</span>${esc(chapter.name)}</div>`}${chapter.beats.length?chapter.beats.map(beat=>`<button class="outline-row outline-beat-row" data-focus-node="${arc.id}" data-beat-id="${beat.id}"><span class="outline-icon">◆</span>${esc(beat.text)}</button>`).join(''):'<div class="outline-empty">No beats</div>'}`}).join('')}</div>`;
   outline.innerHTML=groups.connected.map(renderArc).join('')+(groups.disconnected.length?`<div class="outline-section-label">No Connections</div>${groups.disconnected.map(renderArc).join('')}`:'');
 }
@@ -327,12 +332,14 @@ function serializeProject(){
 }
 
 function loadProject(project){
+  window.ghostwriter?.validateProject(project);
   if(!project||project.format!=='ghostwriter'||!Array.isArray(project.nodes)||!Array.isArray(project.connections))throw new Error('This is not a valid Ghostwriter project.');
   content.innerHTML='';nodes=project.nodes.map(node=>({...node,chapters:node.chapters||[],beats:node.beats||[],refs:node.refs||1,width:node.width||460,height:node.height||300,color:node.color||'#72a9a4'}));connections=project.connections;sourceArcId=project.sourceArcId||nodes.find(node=>node.type==='arc')?.id||null;
-  zoom=Math.max(.5,Math.min(1.5,project.view?.zoom||1));pan={x:project.view?.pan?.x||0,y:project.view?.pan?.y||0};
-  const ids=JSON.stringify(project).match(/-(\d+)/g)||[];nextId=Math.max(0,...ids.map(id=>Number(id.slice(1))))+1;
+  zoom=Math.max(.1,Math.min(1.5,project.view?.zoom||1));pan={x:project.view?.pan?.x||0,y:project.view?.pan?.y||0};
+  const ids=nodes.flatMap(node=>[node.id,...node.beats.map(b=>b.id),...node.chapters.map(c=>c.id||'')]).concat(connections.map(c=>c.id||''));
+  nextId=ids.reduce((max,id)=>Math.max(max,Number(id.match(/-(\d+)$/)?.[1])||0),0)+1;
   document.querySelector('.document-title input').value=project.title||'Untitled Project';
-  nodes.forEach(renderNode);applyTransform();renderStoryPanel();
+  nodes.forEach(renderNode);nodes.filter(n=>n.type==='arc').forEach(n=>syncReferenceInputs(n.id));applyTransform();renderStoryPanel();
 }
 
 document.querySelectorAll('.tray-card').forEach(card=>card.addEventListener('dragstart',e=>{e.dataTransfer.setData('application/x-node',card.dataset.nodeType);e.dataTransfer.effectAllowed='copy'}));
@@ -342,7 +349,13 @@ document.querySelector('#tray-toggle').addEventListener('click',()=>document.que
 document.querySelector('.board-hint button').addEventListener('click',()=>document.querySelector('#board-hint').remove());
 document.querySelector('#zoom-in').addEventListener('click',()=>{const r=board.getBoundingClientRect();zoomAt(zoom+.1,r.left+r.width/2,r.top+r.height/2)});
 document.querySelector('#zoom-out').addEventListener('click',()=>{const r=board.getBoundingClientRect();zoomAt(zoom-.1,r.left+r.width/2,r.top+r.height/2)});
-document.querySelector('#fit-view').addEventListener('click',()=>{zoom=1;pan={x:0,y:0};applyTransform()});
+document.querySelector('#fit-view').addEventListener('click',()=>{
+  if(!nodes.length){zoom=1;pan={x:0,y:0};applyTransform();return;}
+  const bounds=nodes.map(n=>{const el=document.querySelector(`[data-id="${n.id}"]`);return{x:n.x,y:n.y,right:n.x+el.offsetWidth,bottom:n.y+el.offsetHeight}});
+  const left=Math.min(...bounds.map(b=>b.x)),top=Math.min(...bounds.map(b=>b.y)),right=Math.max(...bounds.map(b=>b.right)),bottom=Math.max(...bounds.map(b=>b.bottom));
+  zoom=Math.max(.1,Math.min(1.5,(board.clientWidth-60)/(right-left),(board.clientHeight-60)/(bottom-top)));
+  pan={x:board.clientWidth/2-(left+right)/2*zoom,y:board.clientHeight/2-(top+bottom)/2*zoom};applyTransform();
+});
 document.querySelectorAll('.tool[data-mode]').forEach(tool=>tool.addEventListener('click',()=>{boardMode=tool.dataset.mode;document.querySelectorAll('.tool[data-mode]').forEach(item=>item.classList.toggle('active',item===tool));board.classList.toggle('pan-mode',boardMode==='pan')}));
 board.addEventListener('pointerdown',startPan);
 board.addEventListener('wheel',e=>{
@@ -370,8 +383,49 @@ document.addEventListener('pointerdown',e=>{if(!nodeMenu.hidden&&!nodeMenu.conta
 window.addEventListener('blur',()=>{nodeMenu.hidden=true;menuNode=null});
 
 let hasProject=false;
+let lastSavedState='';
+let observedProjectState='';
+let autosaveTimer=null;
+function projectState(){const project=serializeProject();delete project.savedAt;return JSON.stringify(project);}
+function scheduleAutosave(){
+  if(!hasProject)return;
+  const state=projectState();
+  if(state===observedProjectState)return;
+  observedProjectState=state;
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(()=>{
+    autosaveTimer=null;
+    autosaveCurrent();
+  },2000);
+}
+function autosaveCurrent(){
+  clearTimeout(autosaveTimer);autosaveTimer=null;
+  if(!hasProject)return {saved:true};
+  const state=projectState();
+  if(state===lastSavedState)return {saved:true};
+  const result=window.ghostwriter?.autosave(serializeProject())||{saved:false};
+  if(result.saved)lastSavedState=state;
+  return result;
+}
+window.prepareProjectChange=()=>{
+  if(!hasProject||projectState()===lastSavedState)return true;
+  const result=autosaveCurrent();
+  if(result.saved)return true;
+  return window.confirm(result.error?'Autosave failed: '+result.error+'\nDiscard changes and continue?':'This project has unsaved changes. Discard them and continue?');
+};
+window.addEventListener('beforeunload',e=>{
+  // Chromium suppresses window.confirm during unload. Let the main process
+  // show a native confirmation when saving cannot complete.
+  const result=autosaveCurrent();
+  if(!result.saved){e.preventDefault();e.returnValue=false;}
+});
+// Observe serialized edits after each interaction's handlers have run.
+for(const eventName of ['input','change','click','contextmenu','pointermove','pointerup','pointercancel','drop','dragend','keydown','focusout','wheel']){
+  document.addEventListener(eventName,()=>queueMicrotask(scheduleAutosave));
+}
+document.querySelector('.document-title input').addEventListener('input',renderStoryPanel);
 const home=document.querySelector('#project-home');
-function enterProject(){hasProject=true;home.hidden=true;document.querySelector('.app-shell').inert=false;renderStoryPanel();applyTransform()}
+function enterProject(){clearTimeout(autosaveTimer);autosaveTimer=null;hasProject=true;home.hidden=true;document.querySelector('.app-shell').inert=false;renderStoryPanel();applyTransform();observedProjectState=projectState()}
 async function showProjectHome(){
   home.hidden=false;document.querySelector('.app-shell').inert=true;
   document.querySelector('#home-resume').hidden=!hasProject;
@@ -397,7 +451,6 @@ async function showProjectHome(){
       const detail=document.createElement('span');detail.textContent=template.description;
       button.append(title,detail);
       button.addEventListener('click',()=>{
-        if(hasProject&&!window.confirm('Start from this template? Unsaved changes will be lost.'))return;
         window.ghostwriter.openTemplate(template.path);
       });
       templates.append(button);
@@ -406,8 +459,7 @@ async function showProjectHome(){
   } catch {templates.textContent='Templates could not be loaded.'}
 }
 document.querySelectorAll('[data-template]').forEach(button=>button.addEventListener('click',async()=>{
-  if(hasProject&&!window.confirm('Start a new project? Unsaved changes to the current project will be lost.'))return;
-  await window.ghostwriter?.newProject();
+  if(await window.ghostwriter?.newProject()===false)return;
   nodes=[];connections=[];sourceArcId=null;nextId=1;content.replaceChildren();pan={x:0,y:0};zoom=1;
   document.querySelector('.document-title input').value='Untitled Project';
   enterProject();
@@ -419,5 +471,9 @@ showProjectHome();
 renderStoryPanel();
 requestAnimationFrame(drawConnections);
 window.addEventListener('resize',drawConnections);
-window.ghostwriter?.onSaveRequested(mode=>{if(hasProject)window.ghostwriter.saveProject(mode,serializeProject())});
-window.ghostwriter?.onProjectLoaded(project=>{try{loadProject(project);enterProject()}catch(error){window.alert(error.message)}});
+window.ghostwriter?.onSaveRequested(async mode=>{
+  if(!hasProject)return;
+  const state=projectState(),result=await window.ghostwriter.saveProject(mode,serializeProject());
+  if(!result.canceled&&mode!=='template')lastSavedState=state;
+});
+window.ghostwriter?.onProjectLoaded(project=>{try{loadProject(project);enterProject();lastSavedState=projectState()}catch(error){window.alert(error.message)}});

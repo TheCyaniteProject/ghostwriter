@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ghostwriter', {
   platform: process.platform,
+  validateProject: (project) => { const error=ipcRenderer.sendSync('project:validate',project);if(error)throw new Error(error);return true; },
+  autosave: (project) => ipcRenderer.sendSync('project:autosave', project),
   recentProjects: () => ipcRenderer.invoke('project:recent'),
   templates: () => ipcRenderer.invoke('project:templates'),
   openTemplate: (file) => ipcRenderer.invoke('project:template', file),
