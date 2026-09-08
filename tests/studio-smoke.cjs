@@ -16,6 +16,10 @@ app.whenReady().then(async()=>{
     await win.loadFile(path.join(__dirname,'../index.html'));
     const result=await win.webContents.executeJavaScript(`(async()=>{
       const check=(condition,message)=>{if(!condition)throw Error(message)};
+      const css=selector=>getComputedStyle(document.querySelector(selector));
+      check(css('html').colorScheme==='dark','native form controls use dark theme');
+      check(css('.project-home').backgroundColor==='rgb(9, 9, 11)','launch page uses near-black background');
+      check(css('body').color==='rgb(247, 244, 255)','app uses white text');
       window.confirm=()=>true;
       const arc=addNode('arc',50,50,{title:'Test Arc',beats:['Leave the bed','Catch a thief'],chapterMap:['First','First']});
       enterProject();document.querySelector('#style-guide-open').click();
@@ -23,6 +27,9 @@ app.whenReady().then(async()=>{
       check(styleGuide==='A thoughtful voice.','style edits persist');
       await styleEditor.querySelector('#style-guide-import').onclick();check(styleGuide.includes('Warm and playful'),'style import works');
       closeStyleGuide();openStudio(arc.id);await loadStudioModels();
+      check(css('#studio-plan').backgroundColor==='rgb(9, 9, 11)','plan editor uses near-black background');
+      check(css('.studio-sidebar').backgroundColor==='rgb(18, 18, 20)','Studio surfaces use neutral charcoal');
+      check(css('#studio-draft').color==='rgb(247, 244, 255)','draft editor uses white text');
       const ref=addNode('reference',400,50,{title:'Biscuit’s secret',text:'A dog who fights crime.'});
       connections.push({id:uid('connection'),type:'reference',from:{node:ref.id,port:'out'},to:{node:arc.id,port:'ref-0'}});
       drawStudio();check(sq('reference-list').textContent.includes('Biscuit’s secret'),'reference in element list');
@@ -51,6 +58,17 @@ app.whenReady().then(async()=>{
       check(nodes[0].chapters[1].plan.some(t=>t.type==='beat'),'plan survives reload');
       check(nodes[0].chapters[1].history.length===1,'history survives reload');
       check(styleGuide.includes('Warm and playful'),'style guide survives reload');
+      scheduleAutosave();
+      markProjectSaved(projectState());
+      check(autosaveTimer===null,'successful save clears pending autosave');
+      const cleanClose=new Event('beforeunload',{cancelable:true});window.dispatchEvent(cleanClose);
+      check(!cleanClose.defaultPrevented,'saved project closes without warning');
+      const cleanState=projectState();styleGuide+=' New edit';scheduleAutosave();
+      markProjectSaved(cleanState);
+      check(autosaveTimer!==null,'edits after saved snapshot retain pending autosave');
+      const dirtyClose=new Event('beforeunload',{cancelable:true});window.dispatchEvent(dirtyClose);
+      check(dirtyClose.defaultPrevented,'unsaved edits still warn when autosave cannot save');
+      markProjectSaved(projectState());
       return 'Studio smoke passed: migration, transfer, text preservation, removal, generation, acceptance, history, save/load';
     })()`);
     console.log(result);win.destroy();app.exit(0);

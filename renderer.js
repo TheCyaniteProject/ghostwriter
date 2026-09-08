@@ -363,7 +363,7 @@ function openArcChapter(arcId,index){
 
 function focusNode(nodeId,beatId){
   const node=nodes.find(item=>item.id===nodeId);if(!node)return;const r=board.getBoundingClientRect();pan.x=r.width/2-(node.x+125)*zoom;pan.y=r.height/2-(node.y+80)*zoom;applyTransform();document.querySelectorAll('.node.selected').forEach(el=>el.classList.remove('selected'));const el=document.querySelector(`[data-id="${nodeId}"]`);el?.classList.add('selected');el?.animate([{transform:'scale(1)'},{transform:'scale(1.025)'},{transform:'scale(1)'}],{duration:280})
-  if(beatId)el?.querySelector(`[data-beat-id="${beatId}"]`)?.animate([{background:'#f8f5ef'},{background:'#ffe5d8'},{background:'#f8f5ef'}],{duration:700});
+  if(beatId)el?.querySelector(`[data-beat-id="${beatId}"]`)?.animate([{background:'var(--surface)'},{background:'var(--purple-soft)'},{background:'var(--surface)'}],{duration:700});
 }
 
 function serializeProject(){
@@ -427,12 +427,23 @@ let lastSavedState='';
 let observedProjectState='';
 let autosaveTimer=null;
 function projectState(){const project=serializeProject();delete project.savedAt;return JSON.stringify(project);}
+function markProjectSaved(state){
+  lastSavedState=state;
+  // A save dialog may remain open while further edits are made. Only clear
+  // the pending autosave if the acknowledged snapshot is still current.
+  if(projectState()===state){
+    clearTimeout(autosaveTimer);autosaveTimer=null;
+    observedProjectState=state;
+  }else scheduleAutosave();
+}
 function scheduleAutosave(){
   if(!hasProject)return;
   const state=projectState();
   if(state===observedProjectState)return;
   observedProjectState=state;
   clearTimeout(autosaveTimer);
+  autosaveTimer=null;
+  if(state===lastSavedState)return;
   autosaveTimer=setTimeout(()=>{
     autosaveTimer=null;
     autosaveCurrent();
@@ -444,7 +455,7 @@ function autosaveCurrent(){
   const state=projectState();
   if(state===lastSavedState)return {saved:true};
   const result=window.ghostwriter?.autosave(serializeProject())||{saved:false};
-  if(result.saved)lastSavedState=state;
+  if(result.saved)markProjectSaved(state);
   return result;
 }
 window.prepareProjectChange=()=>{
@@ -456,6 +467,7 @@ window.prepareProjectChange=()=>{
   return window.confirm(result.error?'Autosave failed: '+result.error+'\nDiscard changes and continue?':'This project has unsaved changes. Discard them and continue?');
 };
 window.addEventListener('beforeunload',e=>{
+  if(!hasProject||projectState()===lastSavedState)return;
   // Chromium suppresses window.confirm during unload. Let the main process
   // show a native confirmation when saving cannot complete.
   const result=autosaveCurrent();
@@ -503,6 +515,7 @@ async function showProjectHome(){
 document.querySelectorAll('[data-template]').forEach(button=>button.addEventListener('click',async()=>{
   if(await window.ghostwriter?.newProject()===false)return;
   nodes=[];connections=[];sourceArcId=null;styleGuide='';nextId=1;content.replaceChildren();pan={x:0,y:0};zoom=1;
+  lastSavedState='';
   document.querySelector('.document-title input').value='Untitled Project';
   enterProject();
 }));
@@ -515,7 +528,10 @@ requestAnimationFrame(drawConnections);
 window.addEventListener('resize',drawConnections);
 window.ghostwriter?.onSaveRequested(async mode=>{
   if(!hasProject)return;
-  const state=projectState(),result=await window.ghostwriter.saveProject(mode,serializeProject());
-  if(!result.canceled&&mode!=='template')lastSavedState=state;
+  const state=projectState();
+  try{
+    const result=await window.ghostwriter.saveProject(mode,serializeProject());
+    if(!result.canceled&&!result.error&&mode!=='template')markProjectSaved(state);
+  }catch(error){window.alert('Could not save project: '+error.message);}
 });
-window.ghostwriter?.onProjectLoaded(project=>{try{loadProject(project);enterProject();lastSavedState=projectState()}catch(error){window.alert(error.message)}});
+window.ghostwriter?.onProjectLoaded(project=>{try{loadProject(project);enterProject();markProjectSaved(projectState())}catch(error){window.alert(error.message)}});

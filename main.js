@@ -1,7 +1,9 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell, nativeTheme } = require('electron');
+nativeTheme.themeSource = 'dark';
 const path = require('node:path');
 const fs = require('node:fs');
 const llm = require('./llm');
+const { projectFilename, resolveSaveTarget, writeProjectAtomically } = require('./project-files');
 const generations = new Map();
 ipcMain.handle('project:import-style-guide', async (event) => {
   const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{
@@ -82,7 +84,10 @@ ipcMain.handle('project:template', async (event, file) => {
 });
 const recentPath = () => path.join(app.getPath('userData'), 'recent-projects.json');
 function recentProjects() {
-  try { return JSON.parse(fs.readFileSync(recentPath(), 'utf8')); } catch { return []; }
+  try {
+    const recent = JSON.parse(fs.readFileSync(recentPath(), 'utf8'));
+    return Array.isArray(recent) ? recent.filter(item => item && typeof item.path === 'string' && typeof item.title === 'string') : [];
+  } catch { return []; }
 }
 async function rememberProject(file, project) {
   const recent = [{ path: file, title: project.title || path.basename(file), openedAt: new Date().toISOString() },
@@ -165,7 +170,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 640,
     titleBarStyle: 'hiddenInset',
-    backgroundColor: '#f1eee8',
+    backgroundColor: '#09090b',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -187,15 +192,15 @@ function createWindow() {
     // In Electron, preventing this event allows the blocked unload to proceed.
     if (choice === 1) event.preventDefault();
   });
-  win.loadFile('index.html');
+  win.loadFile(path.join(__dirname, 'index.html'));
   watchFrontend(win);
   installMenu(win);
 }
 
 ipcMain.handle('project:save', async (_event, { mode, project }) => {
-  validateProject(project);
-  if (mode === 'template') {
-    try {
+  try {
+    validateProject(project);
+    if (mode === 'template') {
       const directory = templateDirs()[1];
       await fs.promises.mkdir(directory, { recursive: true });
       const name = (project.title || 'Untitled').replace(/[^a-z0-9 _-]/gi, '_').slice(0, 100);
@@ -204,31 +209,26 @@ ipcMain.handle('project:save', async (_event, { mode, project }) => {
       await fs.promises.writeFile(target, JSON.stringify(project, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
       await dialog.showMessageBox({ type: 'info', message: 'Template saved', detail: target });
       return { canceled: false, path: target };
-    } catch (error) {
-      dialog.showErrorBox('Could not save template', error.message);
-      return { canceled: true, error: error.message };
     }
-  }
-  // Save on a new project (including a template copy) is Save As.
-  const useSaveAs = mode === 'save-as' || !projectPath || isTemplate(projectPath);
-  let target = useSaveAs ? null : projectPath;
-  if (useSaveAs) {
-    const name = (project.title || 'Untitled').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '_').slice(0, 100) || 'untitled';
-    const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(_event.sender), {
-      title: 'Save Project As',
-      defaultPath: projectPath && !isTemplate(projectPath) ? path.join(path.dirname(projectPath), name + '.ghostwriter') : name + '.ghostwriter',
-      filters: [{ name: 'Ghostwriter Project', extensions: ['ghostwriter'] }]
-    });
-    if (result.canceled || !result.filePath) return { canceled: true };
-    target = result.filePath.endsWith('.ghostwriter') ? result.filePath : `${result.filePath}.ghostwriter`;
-  }
-  try {
-    await fs.promises.writeFile(target, `${JSON.stringify(project, null, 2)}\n`, 'utf8');
+    // Save on a new project (including a template copy) is Save As.
+    const useSaveAs = mode === 'save-as' || !projectPath || isTemplate(projectPath);
+    let target = useSaveAs ? null : projectPath;
+    if (useSaveAs) {
+      const filename = projectFilename(project.title);
+      const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(_event.sender), {
+        title: 'Save Project As',
+        defaultPath: projectPath && !isTemplate(projectPath) ? path.join(path.dirname(projectPath), filename) : filename,
+        filters: [{ name: 'Ghostwriter Project', extensions: ['ghostwriter'] }]
+      });
+      if (result.canceled || !result.filePath) return { canceled: true };
+      target = await resolveSaveTarget(result.filePath, project.title);
+    }
+    await writeProjectAtomically(target, project);
     projectPath = target;
-    await rememberProject(target, project);
+    try { await rememberProject(target, project); } catch { /* The project is saved even if recent-project metadata fails. */ }
     return { canceled: false, path: target };
   } catch (error) {
-    dialog.showErrorBox('Could not save project', error.message);
+    dialog.showErrorBox(mode === 'template' ? 'Could not save template' : 'Could not save project', error.message);
     return { canceled: true, error: error.message };
   }
 });

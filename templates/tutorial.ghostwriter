@@ -2,7 +2,7 @@
   "format": "ghostwriter",
   "version": 1,
   "title": "Tutorial",
-  "description": "Learn the board with Biscuit, a dog who fights crime after bedtime and gets home before his little girl wakes.",
+  "styleGuide": "",
   "nodes": [
     {
       "id": "container-1",
@@ -12,7 +12,10 @@
       "y": 40,
       "width": 570,
       "height": 720,
-      "color": "#72a9a4"
+      "color": "#72a9a4",
+      "chapters": [],
+      "beats": [],
+      "refs": 1
     },
     {
       "id": "arc-10",
@@ -25,29 +28,54 @@
         {
           "id": "chapter-20",
           "name": "One Paw at a Time",
-          "content": "At midnight, Biscuit opened one eye. Lily was asleep with her hand resting on his ear. He waited until she rolled toward her stuffed rabbit, then eased himself off the quilt, one paw at a time.\n\nDownstairs, he stepped over the squeaky floorboard and squeezed through the dog flap. Behind the flowerpot waited his red bandanna. Lily called it his picnic scarf. The neighborhood knew it as something else.\n\nA metallic clatter came from the direction of the bicycle shop. Biscuit pricked his ears. He had until Lily’s alarm rang at seven. He tucked his nose beneath the gate and went to work."
+          "content": "At midnight, Biscuit opened one eye. Lily was asleep with her hand resting on his ear. He waited until she rolled toward her stuffed rabbit, then eased himself off the quilt, one paw at a time.\n\nDownstairs, he stepped over the squeaky floorboard and squeezed through the dog flap. Behind the flowerpot waited his red bandanna. Lily called it his picnic scarf. The neighborhood knew it as something else.\n\nA metallic clatter came from the direction of the bicycle shop. Biscuit pricked his ears. He had until Lily’s alarm rang at seven. He tucked his nose beneath the gate and went to work.",
+          "plan": [
+            {
+              "type": "beat",
+              "beatId": "beat-30"
+            },
+            {
+              "type": "beat",
+              "beatId": "beat-31"
+            }
+          ]
         }
       ],
       "beats": [
         {
           "id": "beat-30",
           "text": "Biscuit slips out of sleeping Lily’s bed",
-          "chapter": "One Paw at a Time"
+          "chapter": "One Paw at a Time",
+          "chapterId": "chapter-20"
         },
         {
           "id": "beat-31",
           "text": "He follows a suspicious clatter into town",
-          "chapter": "One Paw at a Time"
+          "chapter": "One Paw at a Time",
+          "chapterId": "chapter-20"
         }
-      ]
+      ],
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "reference-40",
       "type": "reference",
       "title": "Biscuit’s secret",
       "text": "A small, scruffy dog with sharp ears. Lily thinks his red bandanna is a picnic scarf; at night, it is his hero uniform.",
-      "x": 85,
-      "y": 450
+      "x": 46.78245198438368,
+      "y": 509.35917032212745,
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4",
+      "noteSize": {
+        "width": 248.60464734785793,
+        "height": 163.95352652142063
+      }
     },
     {
       "id": "container-2",
@@ -57,42 +85,70 @@
       "y": 180,
       "width": 610,
       "height": 810,
-      "color": "#8b7ee3"
+      "color": "#8b7ee3",
+      "chapters": [],
+      "beats": [],
+      "refs": 1
     },
     {
       "id": "arc-11",
       "type": "arc",
       "title": "II · The midnight patrol",
-      "x": 725,
-      "y": 280,
+      "x": 720.1211640831128,
+      "y": 253.97954177660165,
       "refs": 2,
       "chapters": [
         {
           "id": "chapter-21",
           "name": "The Bicycle Bandit",
-          "content": "A man in a woolly hat was wheeling a stolen bicycle out of the shop. Two more leaned against his van. Biscuit crouched behind a bin and watched the man load them. Then he spotted the van keys dangling from a pocket.\n\nHe darted forward, caught the key ring in his teeth, and bolted. “Come back!” the thief whispered, then shouted, then tripped over the bicycle he had left across the pavement.\n\nBiscuit ducked beneath a bench beside a parked police car. He dropped the keys at the officer’s boots and barked until she looked up. Across the street, the thief was trying to untangle his coat from a pedal.\n\n“Well,” said the officer, reaching for her radio. “You’ve made this easy.” She bent to check Biscuit’s collar, but he was already trotting away. Heroes could not afford to be late for breakfast."
+          "content": "A man in a woolly hat was wheeling a stolen bicycle out of the shop. Two more leaned against his van. Biscuit crouched behind a bin and watched the man load them. Then he spotted the van keys dangling from a pocket.\n\nHe darted forward, caught the key ring in his teeth, and bolted. “Come back!” the thief whispered, then shouted, then tripped over the bicycle he had left across the pavement.\n\nBiscuit ducked beneath a bench beside a parked police car. He dropped the keys at the officer’s boots and barked until she looked up. Across the street, the thief was trying to untangle his coat from a pedal.\n\n“Well,” said the officer, reaching for her radio. “You’ve made this easy.” She bent to check Biscuit’s collar, but he was already trotting away. Heroes could not afford to be late for breakfast.",
+          "plan": [
+            {
+              "type": "beat",
+              "beatId": "beat-32"
+            },
+            {
+              "type": "beat",
+              "beatId": "beat-33"
+            }
+          ]
         }
       ],
       "beats": [
         {
           "id": "beat-32",
           "text": "Biscuit catches a thief stealing bicycles",
-          "chapter": "The Bicycle Bandit"
+          "chapter": "The Bicycle Bandit",
+          "chapterId": "chapter-21"
         },
         {
           "id": "beat-33",
           "text": "He stops the getaway and alerts a passing officer",
-          "chapter": "The Bicycle Bandit"
+          "chapter": "The Bicycle Bandit",
+          "chapterId": "chapter-21"
         }
-      ]
+      ],
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "reference-41",
       "type": "reference",
       "title": "The bicycle shop",
       "text": "A quiet corner near a police parking spot. A noisy shutter and keys hanging from a pocket give Biscuit his opportunity.",
-      "x": 995,
-      "y": 595
+      "x": 1008.0102291116991,
+      "y": 622.6467368623607,
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4",
+      "noteSize": {
+        "width": 240.23253143500557,
+        "height": 177.90705304284126
+      }
     },
     {
       "id": "container-3",
@@ -102,7 +158,10 @@
       "y": 75,
       "width": 560,
       "height": 740,
-      "color": "#e49a76"
+      "color": "#e49a76",
+      "chapters": [],
+      "beats": [],
+      "refs": 1
     },
     {
       "id": "arc-12",
@@ -115,144 +174,249 @@
         {
           "id": "chapter-22",
           "name": "A Very Good Dog",
-          "content": "The sky was turning pink when Biscuit slipped through the garden gate. He tucked the bandanna behind the flowerpot and licked a muddy paw. Somewhere down the street, the bicycle shop’s alarm finally fell silent.\n\nInside, he stepped over the squeaky floorboard again. He climbed the stairs slowly; chasing criminals was easier than climbing stairs quietly. Lily’s clock read 6:58.\n\nBiscuit hopped onto the bed, turned twice, and settled into the warm hollow beside her knees. When the alarm rang, Lily stretched and buried her fingers in his fur.\n\n“Did you sleep well, Biscuit?”\n\nHe gave an enormous yawn. Lily kissed his head. Under the quilt, his tail thumped once."
+          "content": "The sky was turning pink when Biscuit slipped through the garden gate. He tucked the bandanna behind the flowerpot and licked a muddy paw. Somewhere down the street, the bicycle shop’s alarm finally fell silent.\n\nInside, he stepped over the squeaky floorboard again. He climbed the stairs slowly; chasing criminals was easier than climbing stairs quietly. Lily’s clock read 6:58.\n\nBiscuit hopped onto the bed, turned twice, and settled into the warm hollow beside her knees. When the alarm rang, Lily stretched and buried her fingers in his fur.\n\n“Did you sleep well, Biscuit?”\n\nHe gave an enormous yawn. Lily kissed his head. Under the quilt, his tail thumped once.",
+          "plan": [
+            {
+              "type": "beat",
+              "beatId": "beat-34"
+            },
+            {
+              "type": "beat",
+              "beatId": "beat-35"
+            }
+          ]
         }
       ],
       "beats": [
         {
           "id": "beat-34",
           "text": "Biscuit hides his bandanna and sneaks home",
-          "chapter": "A Very Good Dog"
+          "chapter": "A Very Good Dog",
+          "chapterId": "chapter-22"
         },
         {
           "id": "beat-35",
           "text": "He curls up beside Lily before her alarm rings",
-          "chapter": "A Very Good Dog"
+          "chapter": "A Very Good Dog",
+          "chapterId": "chapter-22"
         }
-      ]
+      ],
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "reference-42",
       "type": "reference",
       "title": "Home by seven",
       "text": "Lily’s alarm rings at 7:00. Biscuit must hide his bandanna, avoid the squeaky floorboard, and be back on her bed before she wakes.",
-      "x": 1405,
-      "y": 440
+      "x": 1383.6274517066686,
+      "y": 360.24376957230214,
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4",
+      "noteSize": {
+        "width": 250,
+        "height": 191.86057956426185
+      }
     },
     {
       "id": "container-90",
       "type": "container",
       "title": "Board workshop · Try moving this group",
-      "x": 40,
-      "y": 845,
+      "x": -99.53526521420622,
+      "y": 731.9764351764929,
       "width": 840,
       "height": 330,
-      "color": "#778fa8"
+      "color": "#778fa8",
+      "chapters": [],
+      "beats": [],
+      "refs": 1
     },
     {
       "id": "sticky-100",
       "type": "sticky",
-      "x": 335,
+      "x": 346.3839504727368,
       "y": 110,
-      "text": "START HERE\nThe gold star marks the Source Arc. Follow the purple lines to read the story in order."
+      "text": "START HERE\nThe gold star marks the Source Arc. Follow the purple lines to read the story in order.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-101",
       "type": "sticky",
       "x": 355,
       "y": 315,
-      "text": "ARCS\nDrag an Arc by its header. Open its ••• menu to rename it or set it as the source."
+      "text": "ARCS\nDrag an Arc by its header. Open its ••• menu to rename it or set it as the source.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-102",
       "type": "sticky",
       "x": 325,
       "y": 565,
-      "text": "BEATS\nEach row is a story moment. Drag rows to reorder them or move them into another Arc."
+      "text": "BEATS\nEach row is a story moment. Drag rows to reorder them or move them into another Arc.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-103",
       "type": "sticky",
-      "x": 1035,
-      "y": 265,
-      "text": "REFERENCES\nYellow lines connect background notes to Arcs. One spare input is always ready for another note."
+      "x": 1012.2320990545264,
+      "y": 247.11093497141363,
+      "text": "REFERENCES\nYellow lines connect background notes to Arcs. One spare input is always ready for another note.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-104",
       "type": "sticky",
       "x": 1005,
       "y": 455,
-      "text": "CONNECTIONS\nDrag a connected dot to move that end of the line. Right-click a dot to disconnect it."
+      "text": "CONNECTIONS\nDrag a connected dot to move that end of the line. Right-click a dot to disconnect it.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-105",
       "type": "sticky",
       "x": 735,
       "y": 615,
-      "text": "CHAPTERS\nClick a chapter at the bottom of an Arc to open its written story in the left panel."
+      "text": "CHAPTERS\nClick a chapter at the bottom of an Arc to open its written story in the left panel.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-106",
       "type": "sticky",
-      "x": 885,
-      "y": 805,
-      "text": "DICTIONARY\nUse the Dictionary tab to explore the outline. Click an Arc or Beat to find it on the board."
+      "x": 818.023072697181,
+      "y": 807.7907053042841,
+      "text": "DICTIONARY\nUse the Dictionary tab to explore the outline. Click an Arc or Beat to find it on the board.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-107",
       "type": "sticky",
-      "x": 1410,
-      "y": 175,
-      "text": "READ THE STORY\nOpen Story, then click its expand button for the focused reader. Try the text-size controls."
+      "x": 1391.2977956519323,
+      "y": 153.04523837400765,
+      "text": "READ THE STORY\nOpen Story, then click its expand button for the focused reader. Try the text-size controls.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-108",
       "type": "sticky",
-      "x": 1670,
-      "y": 475,
-      "text": "STICKY NOTES\nClick to edit a note. Drag its top edge to move it. The × removes it."
+      "x": 652.426832511376,
+      "y": -310.89284299256184,
+      "text": "STICKY NOTES\nClick to edit a note. Drag its top edge to move it. Click × to remove it.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-109",
       "type": "sticky",
-      "x": 1440,
-      "y": 635,
-      "text": "YOUR TURN\nMove a Beat or reconnect a Reference. The story’s chapter text stays separate from your planning notes."
+      "x": 1526.8827452410885,
+      "y": 602.3442691305119,
+      "text": "YOUR TURN\nMove a Beat or reconnect a Reference. The story’s chapter text stays separate from your planning notes.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-110",
       "type": "sticky",
-      "x": 80,
-      "y": 935,
-      "text": "MOVE A GROUP\nDrag a container’s header to carry the elements inside it along with you."
+      "x": -59.53526521420622,
+      "y": 821.9764351764929,
+      "text": "MOVE A GROUP\nDrag a container’s header to carry the elements inside it along with you.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-111",
       "type": "sticky",
-      "x": 345,
-      "y": 975,
-      "text": "STYLE A GROUP\nResize from the bottom-right corner. Choose a color using the dots along the bottom."
+      "x": 205.46473478579378,
+      "y": 861.9764351764929,
+      "text": "STYLE A GROUP\nResize from the bottom-right corner. Choose a color using the dots along the bottom.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-112",
       "type": "sticky",
-      "x": 610,
-      "y": 920,
-      "text": "REMOVE A GROUP\nThe container’s × removes only the colored frame. Its contents stay on the board."
+      "x": 470.4647347857938,
+      "y": 806.9764351764929,
+      "text": "REMOVE A GROUP\nThe container’s × removes only the colored frame. Its contents stay on the board.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     },
     {
       "id": "sticky-113",
       "type": "sticky",
-      "x": 1385,
-      "y": 1010,
-      "text": "LOOK AROUND\nDrag empty canvas to pan. Scroll to zoom, or use the controls in the top bar."
-    },
-    {
-      "id": "sticky-114",
-      "type": "sticky",
-      "x": 1640,
-      "y": 1060,
-      "text": "KEEP YOUR WORK\nFile → Save creates your project. Save as Template adds your version to the launch menu."
+      "x": 1009.6501365737853,
+      "y": -227.67780245000915,
+      "text": "LOOK AROUND\nDrag empty canvas to pan. Scroll to zoom, or use the controls in the top bar.",
+      "chapters": [],
+      "beats": [],
+      "refs": 1,
+      "width": 460,
+      "height": 300,
+      "color": "#72a9a4"
     }
   ],
   "connections": [
@@ -319,10 +483,11 @@
   ],
   "sourceArcId": "arc-10",
   "view": {
-    "zoom": 0.5,
+    "zoom": 0.7166647072801701,
     "pan": {
-      "x": 16,
-      "y": 45
+      "x": 307.5888212619084,
+      "y": 341.42413597774475
     }
-  }
+  },
+  "savedAt": "2026-09-08T21:16:01.232Z"
 }

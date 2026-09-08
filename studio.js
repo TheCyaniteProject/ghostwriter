@@ -172,7 +172,7 @@ function addDictionaryStudioLinks(){
   });
 }
 const warning=document.createElement('div');warning.id='llm-warning';warning.className='llm-warning';warning.setAttribute('role','status');
-const retry=document.createElement('button');retry.textContent='Recheck API key';retry.id='llm-recheck';document.querySelector('.home-subtitle').after(warning,retry);
+const retry=document.createElement('button');retry.textContent='Recheck API key';retry.id='llm-recheck';document.querySelector('.home-api').append(warning,retry);
 async function checkLLMKey(){warning.hidden=false;warning.textContent='Checking OpenAI connection…';retry.disabled=true;try{const status=await window.ghostwriter.llmKeyStatus();warning.textContent=status.message;warning.hidden=status.state==='valid';}catch{warning.textContent='Unable to check the OpenAI connection.';}finally{retry.disabled=false;}}
 retry.onclick=checkLLMKey;checkLLMKey();
 for(const target of [sq('draft'),sq('refs')]){
