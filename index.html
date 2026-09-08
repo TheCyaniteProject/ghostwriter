@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghostwriter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark"><span></span><span></span><span></span></div>
+          <span>Ghostwriter</span>
+        </div>
+        <div class="document-title">
+          <span class="status-dot"></span>
+          <input value="The Last Lighthouse" aria-label="Project title" />
+        </div>
+        <div class="top-actions">
+          <div class="top-tools" aria-label="Board tools">
+            <button class="tool active" data-mode="select" title="Interact">↖</button>
+            <button class="tool" data-mode="pan" title="Pan">✋</button>
+          </div>
+          <div class="top-zoom" aria-label="Zoom controls">
+            <button id="zoom-out" title="Zoom out">−</button>
+            <span id="zoom-label">100%</span>
+            <button id="zoom-in" title="Zoom in">+</button>
+          </div>
+          <button class="icon-button" id="fit-view" title="Fit board to view">⌗</button>
+          <button class="avatar">KS</button>
+          <button class="share-button">Share</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="story-panel" id="story-panel">
+          <button class="story-panel-toggle" id="story-panel-toggle" aria-label="Collapse story panel">‹</button>
+          <div class="story-panel-tabs">
+            <button class="story-tab active" data-panel-tab="story">Story</button>
+            <button class="story-tab" data-panel-tab="chapters">Dictionary</button>
+          </div>
+          <div class="story-panel-body">
+            <section class="panel-view active" data-panel-view="story">
+              <nav class="chapter-rail" id="chapter-rail" aria-label="Story chapters"></nav>
+              <div class="story-reader" id="story-reader"></div>
+            </section>
+            <section class="panel-view" data-panel-view="chapters">
+              <div class="outline-header"><span class="eyebrow">NAVIGATION</span><h2>Dictionary</h2></div>
+              <div class="chapter-outline" id="chapter-outline"></div>
+            </section>
+          </div>
+          <div class="story-panel-resize" id="story-panel-resize" title="Drag to resize"></div>
+        </aside>
+        <section class="board-wrap" id="board-wrap">
+          <div class="board" id="board">
+            <svg class="connections" id="connections" aria-hidden="true">
+              <defs>
+                <filter id="line-shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity=".12"/></filter>
+              </defs>
+              <g id="connection-paths"></g>
+              <path id="draft-connection" class="connection-path draft" d="" hidden></path>
+            </svg>
+            <div class="board-content" id="board-content"></div>
+          </div>
+
+          <div class="board-hint" id="board-hint">
+            <span>Drag elements from the tray to build your story</span>
+            <button aria-label="Dismiss hint">×</button>
+          </div>
+        </section>
+
+        <aside class="tray" id="tray">
+          <button class="tray-toggle" id="tray-toggle" aria-label="Collapse element tray">›</button>
+          <div class="tray-header">
+            <div>
+              <span class="eyebrow">ELEMENTS</span>
+              <h2>Build your story</h2>
+            </div>
+            <span class="tray-count">3</span>
+          </div>
+
+          <p class="tray-copy">Drag an element onto the board. Drop beats inside arcs to shape the sequence.</p>
+
+          <div class="element-list">
+            <article class="tray-card arc-card" draggable="true" data-node-type="arc">
+              <div class="card-icon arc-icon"><span></span><span></span><span></span></div>
+              <div><h3>Arc</h3><p>A story thread or sequence</p></div>
+              <span class="drag-grip">⠿</span>
+            </article>
+            <article class="tray-card beat-card" draggable="true" data-node-type="beat">
+              <div class="card-icon beat-icon">◆</div>
+              <div><h3>Beat</h3><p>A moment inside an arc</p></div>
+              <span class="drag-grip">⠿</span>
+            </article>
+            <article class="tray-card reference-card" draggable="true" data-node-type="reference">
+              <div class="card-icon reference-icon">≡</div>
+              <div><h3>Reference</h3><p>A note, detail, or source</p></div>
+              <span class="drag-grip">⠿</span>
+            </article>
+          </div>
+
+          <div class="tray-tip">
+            <span>⌘</span>
+            <p><strong>Quick tip</strong> Connect ports by dragging from one dot to another.</p>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

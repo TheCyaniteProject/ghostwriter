@@ -1,0 +1,14 @@
+{
+  "name": "ghostwriter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A visual story scripting board for arcs, beats, and references.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0"
+  }
+}
