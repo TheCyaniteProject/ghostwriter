@@ -2,6 +2,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ghostwriter', {
   platform: process.platform,
+  importStyleGuide: () => ipcRenderer.invoke('project:import-style-guide'),
+  llmConfig: () => ipcRenderer.invoke('llm:config'),
+  llmKeyStatus: () => ipcRenderer.invoke('llm:key-status'),
+  generateChapter: (request) => ipcRenderer.invoke('llm:generate', request),
+  cancelGeneration: () => ipcRenderer.invoke('llm:cancel'),
   validateProject: (project) => { const error=ipcRenderer.sendSync('project:validate',project);if(error)throw new Error(error);return true; },
   autosave: (project) => ipcRenderer.sendSync('project:autosave', project),
   recentProjects: () => ipcRenderer.invoke('project:recent'),

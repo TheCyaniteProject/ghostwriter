@@ -1,0 +1,13 @@
+{
+  "defaultModel": "openai-sol",
+  "defaultPrompt": "Write a chapter of at least {word_count} words using the chapter plan and attached references. Follow the Beat order and incorporate the directions between them. Treat the plan as guidance, not text to quote. Return only the chapter prose.",
+  "models": [
+    { "id": "openai-sol", "label": "OpenAI · GPT-5.6 Sol", "model": "gpt-5.6-sol", "api": "responses", "endpoint": "https://api.openai.com/v1/responses", "keyEnv": "OPENAI_API_KEY", "auth": "bearer" },
+    { "id": "openai-terra", "label": "OpenAI · GPT-5.6 Terra", "model": "gpt-5.6-terra", "api": "responses", "endpoint": "https://api.openai.com/v1/responses", "keyEnv": "OPENAI_API_KEY", "auth": "bearer" },
+    { "id": "openai-luna", "label": "OpenAI · GPT-5.6 Luna", "model": "gpt-5.6-luna", "api": "responses", "endpoint": "https://api.openai.com/v1/responses", "keyEnv": "OPENAI_API_KEY", "auth": "bearer" },
+    { "id": "openai-astra", "label": "OpenAI · GPT-6 Astra", "model": "gpt-6-astra", "api": "responses", "endpoint": "https://api.openai.com/v1/responses", "keyEnv": "OPENAI_API_KEY", "auth": "bearer" },
+    { "id": "lmstudio", "label": "LM Studio · local model", "model": "local-model", "api": "chat", "endpoint": "http://localhost:1234/v1/chat/completions", "auth": "none" },
+    { "id": "azure", "label": "Azure · configure deployment", "model": "YOUR_DEPLOYMENT_NAME", "api": "chat", "endpoint": "https://YOUR_RESOURCE.openai.azure.com/openai/v1/chat/completions", "keyEnv": "AZURE_OPENAI_API_KEY", "auth": "api-key" },
+    { "id": "custom", "label": "Custom · OpenAI-compatible endpoint", "model": "YOUR_MODEL_ID", "api": "chat", "endpoint": "http://localhost:8080/v1/chat/completions", "keyEnv": "CUSTOM_LLM_API_KEY", "auth": "bearer" }
+  ]
+}

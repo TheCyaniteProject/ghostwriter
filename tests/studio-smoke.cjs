@@ -1,0 +1,58 @@
+const {app,BrowserWindow,ipcMain}=require('electron');
+const path=require('node:path');
+const {validateProject}=require('../project-validation');
+const {publicConfig}=require('../llm');
+app.commandLine.appendSwitch('disable-gpu');
+ipcMain.handle('project:recent',()=>[]);ipcMain.handle('project:templates',()=>[]);
+ipcMain.handle('llm:key-status',()=>({state:'missing',message:'Test: missing key'}));
+ipcMain.handle('llm:config',()=>publicConfig());
+ipcMain.handle('project:import-style-guide',()=>({text:'# Voice\nWarm and playful.'}));
+ipcMain.handle('llm:generate',()=>({text:'Biscuit slipped into the night.',words:6}));
+ipcMain.on('project:autosave',e=>{e.returnValue={saved:false};});
+ipcMain.on('project:validate',(e,p)=>{try{validateProject(p);e.returnValue=null;}catch(error){e.returnValue=error.message;}});
+app.whenReady().then(async()=>{
+  const win=new BrowserWindow({show:false,webPreferences:{preload:path.join(__dirname,'../preload.js'),contextIsolation:true,nodeIntegration:false}});
+  try{
+    await win.loadFile(path.join(__dirname,'../index.html'));
+    const result=await win.webContents.executeJavaScript(`(async()=>{
+      const check=(condition,message)=>{if(!condition)throw Error(message)};
+      window.confirm=()=>true;
+      const arc=addNode('arc',50,50,{title:'Test Arc',beats:['Leave the bed','Catch a thief'],chapterMap:['First','First']});
+      enterProject();document.querySelector('#style-guide-open').click();
+      styleText.value='A thoughtful voice.';styleText.dispatchEvent(new Event('input',{bubbles:true}));
+      check(styleGuide==='A thoughtful voice.','style edits persist');
+      await styleEditor.querySelector('#style-guide-import').onclick();check(styleGuide.includes('Warm and playful'),'style import works');
+      closeStyleGuide();openStudio(arc.id);await loadStudioModels();
+      const ref=addNode('reference',400,50,{title:'Biscuit’s secret',text:'A dog who fights crime.'});
+      connections.push({id:uid('connection'),type:'reference',from:{node:ref.id,port:'out'},to:{node:arc.id,port:'ref-0'}});
+      drawStudio();check(sq('reference-list').textContent.includes('Biscuit’s secret'),'reference in element list');
+      const transfer=new DataTransfer();transfer.setData('application/x-studio-reference',ref.id);
+      sq('plan').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+      const reference=sq('refs').querySelector('details');
+      check(reference.textContent.includes('A dog who fights crime.'),'reference contents viewable');
+      check(studioChapter.referenceIds.includes(ref.id),'reference attached by drop');
+      sq('refs').querySelector('button').click();check(!studioChapter.referenceIds.includes(ref.id),'attachment removable');
+      sq('reference-list').querySelector('button').click();check(studioChapter.referenceIds.includes(ref.id),'reference also attachable by click');
+      setStudioBusy(true);check(sq('generate').hidden&&!sq('cancel').hidden,'cancel replaces generate');setStudioBusy(false);
+      check(!sq('generate').hidden&&sq('cancel').hidden,'generate restored');
+      check(sq('plan').querySelectorAll('[data-beat-id]').length===2,'legacy assignments migrate');
+      const before=arc.chapters[0];sq('plan').append(document.createTextNode(' Quietly, so nobody wakes.'));saveStudioPlan();
+      sq('add').click();const next=studioChapter;insertStudioBeat(arc.beats[0].id);
+      check(!before.plan.some(t=>t.beatId===arc.beats[0].id),'transfer releases previous assignment');
+      check(arc.beats[0].chapterId===next.id,'transfer assigns selected chapter');
+      check(before.plan.some(t=>t.text?.includes('Quietly')),'directions preserved');
+      sq('plan').querySelector('button').click();check(!arc.beats[0].chapterId,'removal unassigns without deleting Beat');
+      check(arc.beats.length===2,'Beat still exists');
+      insertStudioBeat(arc.beats[0].id);sq('model').value='openai-sol';await sq('generate').onclick();
+      check(next.draft.includes('Biscuit'),'draft generated');check(next.content==='','draft not automatically accepted');
+      sq('accept').click();check(next.content.includes('Biscuit'),'accept publishes draft');
+      await sq('generate').onclick();check(next.history.length===1,'regeneration preserves previous draft');
+      const saved=serializeProject();window.ghostwriter.validateProject(saved);closeStudio();loadProject(saved);
+      check(nodes[0].chapters[1].plan.some(t=>t.type==='beat'),'plan survives reload');
+      check(nodes[0].chapters[1].history.length===1,'history survives reload');
+      check(styleGuide.includes('Warm and playful'),'style guide survives reload');
+      return 'Studio smoke passed: migration, transfer, text preservation, removal, generation, acceptance, history, save/load';
+    })()`);
+    console.log(result);win.destroy();app.exit(0);
+  }catch(error){console.error(error);win.destroy();app.exit(1);}
+});

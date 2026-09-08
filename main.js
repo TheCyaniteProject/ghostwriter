@@ -1,10 +1,37 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
+const llm = require('./llm');
+const generations = new Map();
+ipcMain.handle('project:import-style-guide', async (event) => {
+  const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{
+    title:'Import Style Guide',properties:['openFile'],filters:[{name:'Text or Markdown',extensions:['txt','md']}]
+  });
+  if(result.canceled)return {canceled:true};
+  try{
+    const file=result.filePaths[0];
+    if(!['.txt','.md'].includes(path.extname(file).toLowerCase()))throw new Error('Choose a .txt or .md file.');
+    if((await fs.promises.stat(file)).size>800000)throw new Error('The Style Guide file is too large.');
+    const text=(await fs.promises.readFile(file,'utf8')).replace(/^\uFEFF/,'');
+    if(text.length>200000)throw new Error('The Style Guide exceeds 200,000 characters.');
+    return {text};
+  }catch(error){return {error:error.message};}
+});
+ipcMain.handle('llm:config', () => llm.publicConfig());
+ipcMain.handle('llm:key-status', () => llm.keyStatus());
+ipcMain.handle('llm:cancel', (event) => generations.get(event.sender.id)?.abort());
+ipcMain.handle('llm:generate', async (event, request) => {
+  if(generations.has(event.sender.id))return {error:'A chapter is already being generated.'};
+  const controller=new AbortController();generations.set(event.sender.id,controller);
+  const timer=setTimeout(()=>controller.abort(),180000);
+  try{return await llm.generate(request,{signal:controller.signal});}
+  catch(error){return {error:controller.signal.aborted?'Generation cancelled or timed out.':error.message};}
+  finally{clearTimeout(timer);generations.delete(event.sender.id);}
+});
 const { validateProject } = require('./project-validation');
 
 const isDev = process.argv.includes('--dev');
-const frontendFiles = ['index.html', 'styles.css', 'renderer.js', 'preload.js'];
+const frontendFiles = ['index.html', 'styles.css', 'renderer.js', 'studio.js', 'style-guide.js', 'preload.js'];
 let projectPath = null;
 ipcMain.on('project:validate', (event, project) => {
   try { validateProject(project);event.returnValue=null; } catch(error){event.returnValue=error.message;}
