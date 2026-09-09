@@ -8,5 +8,5 @@
   parser.renderer.rules.link_open = () => '<span class="markdown-link">';
   parser.renderer.rules.link_close = () => '</span>';
   parser.renderer.rules.image = (tokens, index) => parser.utils.escapeHtml(tokens[index].content);
-  return { render: text => parser.render(text || '') };
+  return { render: text => parser.render(text || ''), parse: text => parser.parse(text || '', {}) };
 });

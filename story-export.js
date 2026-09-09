@@ -1,16 +1,8 @@
 const { render: renderMarkdown } = require('./markdown');
+const { escapeRtf, markdownRtf } = require('./rtf');
 const formats = { md: 'Markdown', txt: 'Plain text', html: 'HTML', rtf: 'Rich text' };
 const htmlEscape = text => text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const markdownEscape = text => text.replace(/([\\`*_{}\[\]()<>#+.!|~-])/g, '\\$1');
-function rtfEscape(text) {
-  return text.replace(/\r\n?/g, '\n').split('').map(c => {
-    if ('\\{}'.includes(c)) return '\\' + c;
-    if (c === '\n') return '\\par\n';
-    if (c === '\t') return '\\tab ';
-    const code = c.charCodeAt(0);
-    return code > 127 ? '\\u' + (code > 32767 ? code - 65536 : code) + '?' : c;
-  }).join('');
-}
 function exportStory(story, format) {
   if (!Object.hasOwn(formats, format)) throw new Error('Choose a supported export format.');
   if (!story || typeof story.title !== 'string' || !Array.isArray(story.chapters) ||
@@ -23,6 +15,8 @@ function exportStory(story, format) {
   if (format === 'txt') return [title, ...chapters.flatMap(c => [c.name, c.content])].join('\n\n') + '\n';
   if (format === 'md') return '# ' + markdownEscape(title) + '\n\n' + chapters.map(c => '## ' + markdownEscape(c.name) + '\n\n' + c.content).join('\n\n') + '\n';
   if (format === 'html') return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + htmlEscape(title) + '</title><style>body{max-width:48rem;margin:3rem auto;padding:0 1.5rem;font:18px/1.7 Georgia,serif;overflow-wrap:anywhere}pre{white-space:pre-wrap;padding:1rem;background:#f3f3f3}blockquote{margin-left:0;padding-left:1rem;border-left:3px solid #aaa}table{border-collapse:collapse}th,td{padding:.4rem;border:1px solid #aaa}.markdown-link{text-decoration:underline}</style></head><body><h1>' + htmlEscape(title) + '</h1>' + chapters.map(c => '<section><h2>' + htmlEscape(c.name) + '</h2>' + renderMarkdown(c.content) + '</section>').join('\n') + '</body></html>\n';
-  return '{\\rtf1\\ansi\\uc1\\deff0{\\fonttbl{\\f0 Georgia;}}\n\\f0\\fs24\n{\\b\\fs36 ' + rtfEscape(title) + '}\\par\\par\n' + chapters.map(c => '{\\b\\fs28 ' + rtfEscape(c.name) + '}\\par\n' + rtfEscape(c.content) + '\\par\\par\n').join('') + '}\n';
+  return '{\\rtf1\\ansi\\uc1\\deff0{\\fonttbl{\\f0 Georgia;}{\\f1 Courier New;}}\n' +
+    '{\\pard\\f0\\b\\fs36 ' + escapeRtf(title) + '\\par}\n' +
+    chapters.map(c => '{\\pard\\f0\\b\\fs28\\sa200 ' + escapeRtf(c.name) + '\\par}\n' + markdownRtf(c.content)).join('') + '}\n';
 }
 module.exports = { formats, exportStory };
