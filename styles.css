@@ -10,6 +10,7 @@ button { cursor:pointer; }
 .app-shell { height:100%; background:var(--canvas); }
 .topbar { height:72px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:0 24px 0 84px; background:rgba(255,253,250,.96); border-bottom:1px solid #ddd9d0; -webkit-app-region:drag; position:relative; z-index:20; }
 .brand { display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-.02em; }
+.brand-logo { display:block; width:150px; max-width:100%; height:auto; position:relative; left:-48px; }
 .brand-mark { display:flex; gap:2px; align-items:flex-end; height:20px; }
 .brand-mark span { display:block; width:5px; border-radius:4px; background:var(--ink); transform:rotate(12deg); }
 .brand-mark span:nth-child(1) { height:11px; }.brand-mark span:nth-child(2) { height:19px; background:var(--purple); }.brand-mark span:nth-child(3) { height:14px; }

@@ -517,6 +517,7 @@ document.querySelectorAll('[data-template]').forEach(button=>button.addEventList
   nodes=[];connections=[];sourceArcId=null;styleGuide='';nextId=1;content.replaceChildren();pan={x:0,y:0};zoom=1;
   lastSavedState='';
   document.querySelector('.document-title input').value='Untitled Project';
+  addNode('arc',80,80,{title:'Source Arc'});
   enterProject();
 }));
 document.querySelector('#home-open').addEventListener('click',()=>window.ghostwriter?.openProject());
