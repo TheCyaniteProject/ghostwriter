@@ -11,6 +11,22 @@ const fs = require('node:fs');
 const llm = require('./llm');
 const { projectFilename, resolveSaveTarget, writeProjectAtomically } = require('./project-files');
 const { openExternalLink } = require('./external-links');
+const { formats: exportFormats, exportStory } = require('./story-export');
+ipcMain.handle('story:export', async (event, { format, story }) => {
+  try {
+    const text = exportStory(story, format);
+    const filename = projectFilename(story.title).replace(/\.ghostwriter$/, '.' + format);
+    const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender), {
+      title: 'Export Story',
+      defaultPath: path.join(app.getPath('documents'), filename),
+      filters: [{ name: exportFormats[format], extensions: [format] }]
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    const target = result.filePath.toLowerCase().endsWith('.' + format) ? result.filePath : result.filePath + '.' + format;
+    await fs.promises.writeFile(target, text, 'utf8');
+    return { path: target };
+  } catch (error) { return { error: error.message }; }
+});
 const generations = new Map();
 ipcMain.handle('project:import-style-guide', async (event) => {
   const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{

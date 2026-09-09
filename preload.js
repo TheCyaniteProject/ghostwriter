@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('ghostwriter', {
   platform: process.platform,
+  exportStory: (format, story) => ipcRenderer.invoke('story:export', { format, story }),
   importStyleGuide: () => ipcRenderer.invoke('project:import-style-guide'),
   llmConfig: () => ipcRenderer.invoke('llm:config'),
   llmKeyStatus: () => ipcRenderer.invoke('llm:key-status'),

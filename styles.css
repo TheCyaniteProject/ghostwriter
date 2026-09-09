@@ -11,6 +11,13 @@ button { cursor:pointer; }
 .topbar { height:72px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:0 24px 0 84px; background:rgba(255,253,250,.96); border-bottom:1px solid #ddd9d0; -webkit-app-region:drag; position:relative; z-index:20; }
 .brand { display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-.02em; }
 .brand-logo { display:block; width:150px; max-width:100%; height:auto; position:relative; left:-48px; }
+#export-dialog { width:min(460px,calc(100vw - 48px)); padding:28px; border:1px solid var(--line); border-radius:14px; background:var(--paper); color:var(--ink); }
+#export-dialog::backdrop { background:#0009; backdrop-filter:blur(3px); }
+#export-dialog h2 { margin-top:0; }
+#export-dialog p { font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+#export-dialog select { width:100%; margin:10px 0; padding:10px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:6px; }
+#export-dialog footer { display:flex; justify-content:flex-end; gap:12px; }
+#export-close { background:transparent; border:1px solid var(--line); border-radius:9px; padding:9px 17px; }
 .brand-mark { display:flex; gap:2px; align-items:flex-end; height:20px; }
 .brand-mark span { display:block; width:5px; border-radius:4px; background:var(--ink); transform:rotate(12deg); }
 .brand-mark span:nth-child(1) { height:11px; }.brand-mark span:nth-child(2) { height:19px; background:var(--purple); }.brand-mark span:nth-child(3) { height:14px; }

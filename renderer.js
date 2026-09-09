@@ -423,6 +423,27 @@ document.addEventListener('pointerdown',e=>{if(!nodeMenu.hidden&&!nodeMenu.conta
 window.addEventListener('blur',()=>{nodeMenu.hidden=true;menuNode=null});
 
 let hasProject=false;
+const exportDialog=document.querySelector('#export-dialog');
+let exportBusy=false;
+document.querySelector('#export-open').onclick=()=>{
+  document.querySelector('#export-status').textContent='';
+  exportDialog.showModal();
+};
+document.querySelector('#export-close').onclick=()=>exportDialog.close();
+exportDialog.addEventListener('cancel',e=>{if(exportBusy)e.preventDefault();});
+document.querySelector('#export-form').onsubmit=async e=>{
+  e.preventDefault();if(exportBusy)return;
+  const groups=orderedArcGroups();
+  const story={title:document.querySelector('.document-title input').value,chapters:[...groups.connected,...groups.disconnected].flatMap(arc=>actualChaptersForArc(arc).map(c=>({name:c.name,content:c.content||''})))};
+  exportBusy=true;
+  exportDialog.querySelectorAll('button,select').forEach(el=>el.disabled=true);
+  const status=document.querySelector('#export-status');status.textContent='Choose where to save your story…';
+  try{
+    const result=await window.ghostwriter.exportStory(document.querySelector('#export-format').value,story);
+    status.textContent=result.error|| (result.canceled?'Export canceled.':'Story saved to '+result.path);
+  }catch(error){status.textContent='Could not export story: '+error.message;}
+  finally{exportBusy=false;exportDialog.querySelectorAll('button,select').forEach(el=>el.disabled=false);}
+};
 let lastSavedState='';
 let observedProjectState='';
 let autosaveTimer=null;

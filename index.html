@@ -46,8 +46,7 @@
             <button id="zoom-in" title="Zoom in">+</button>
           </div>
           <button class="icon-button" id="fit-view" title="Fit board to view">⌗</button>
-          <button class="avatar">KS</button>
-          <button class="share-button">Share</button>
+          <button class="share-button" id="export-open">Export</button>
         </div>
       </header>
 
@@ -149,6 +148,21 @@
       </div>
     </div>
 
+    <dialog id="export-dialog" aria-labelledby="export-heading">
+      <form id="export-form">
+        <h2 id="export-heading">Export story</h2>
+        <p>Export published chapters in Story order. Plans, references, and unaccepted drafts are excluded.</p>
+        <label for="export-format">File format</label>
+        <select id="export-format">
+          <option value="md">Markdown (.md)</option>
+          <option value="txt">Plain text (.txt)</option>
+          <option value="html">Web page (.html)</option>
+          <option value="rtf">Rich text (.rtf)</option>
+        </select>
+        <p id="export-status" role="status"></p>
+        <footer><button type="button" id="export-close">Close</button><button type="submit" id="export-save" class="share-button">Save story…</button></footer>
+      </form>
+    </dialog>
     <script src="renderer.js"></script>
     <script src="studio.js"></script>
     <script src="style-guide.js"></script>
