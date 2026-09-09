@@ -6,7 +6,10 @@ const path = require('node:path');
 app.commandLine.appendSwitch('disable-gpu');
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ghostwriter-save-ipc-'));
-dialog.showSaveDialog = async () => ({ canceled: false, filePath: directory });
+app.setPath('userData', path.join(directory, 'user-data'));
+let dialogCalls = 0;
+let dialogPath = directory;
+dialog.showSaveDialog = async () => { dialogCalls++; return { canceled: false, filePath: dialogPath }; };
 dialog.showErrorBox = (title, message) => { throw new Error(`${title}: ${message}`); };
 
 require('../main');
@@ -35,7 +38,31 @@ app.whenReady().then(async () => {
     if (saved.title !== 'IPC Save Test' || saved.nodes[0]?.title !== 'Saved Arc') {
       throw new Error('Saved project contents did not match renderer state.');
     }
-    console.log(`Save smoke passed: ${expected}`);
+    const assert = require('node:assert/strict');
+    const loadedPath = path.join(directory, 'chosen-filename.ghostwriter');
+    fs.writeFileSync(loadedPath, JSON.stringify(saved));
+    await win.webContents.executeJavaScript(`window.ghostwriter.openProject(${JSON.stringify(loadedPath)})`);
+    // The project:loaded event precedes this renderer call on the same channel.
+    const beforeAutosave = fs.readFileSync(loadedPath, 'utf8');
+    const backupResult = await win.webContents.executeJavaScript(`(() => {
+      document.querySelector('.document-title input').value='A different title';
+      return window.ghostwriter.autosave(serializeProject());
+    })()`);
+    assert.equal(backupResult.path, loadedPath + '.bak');
+    assert.equal(fs.readFileSync(loadedPath, 'utf8'), beforeAutosave, 'autosave preserves the primary file');
+    assert.equal(JSON.parse(fs.readFileSync(loadedPath + '.bak', 'utf8')).title, 'A different title');
+    const callsBeforeSave = dialogCalls;
+    const saveResult = await win.webContents.executeJavaScript(`window.ghostwriter.saveProject('save',serializeProject())`);
+    assert.equal(saveResult.path, loadedPath, 'Save reuses the loaded filename');
+    assert.equal(dialogCalls, callsBeforeSave, 'Save does not open a new dialog');
+    assert.equal(JSON.parse(fs.readFileSync(loadedPath, 'utf8')).title, 'A different title');
+    dialogPath = path.join(directory, 'save-as-name.ghostwriter');
+    const saveAsResult = await win.webContents.executeJavaScript(`window.ghostwriter.saveProject('save-as',serializeProject())`);
+    assert.equal(saveAsResult.path, dialogPath);
+    const nextBackup = await win.webContents.executeJavaScript(`window.ghostwriter.autosave(serializeProject())`);
+    assert.equal(nextBackup.path, dialogPath + '.bak', 'autosave follows the Save As destination');
+    assert.ok(fs.existsSync(nextBackup.path));
+    console.log('Save smoke passed: disk write, backup isolation, loaded filename retention, Save As destination');
     win.destroy();
     fs.rmSync(directory, { recursive: true });
     app.exit(0);

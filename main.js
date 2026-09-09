@@ -1,9 +1,16 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, shell, nativeTheme } = require('electron');
 nativeTheme.themeSource = 'dark';
+// Bypass the Linux portal chooser: some desktop setups report cancellation
+// after Save. A high required portal version selects the native fallback.
+// Allow an explicit command-line value to override this workaround.
+if (process.platform === 'linux' && !app.commandLine.hasSwitch('xdg-portal-required-version')) {
+  app.commandLine.appendSwitch('xdg-portal-required-version', '999');
+}
 const path = require('node:path');
 const fs = require('node:fs');
 const llm = require('./llm');
 const { projectFilename, resolveSaveTarget, writeProjectAtomically } = require('./project-files');
+const { openExternalLink } = require('./external-links');
 const generations = new Map();
 ipcMain.handle('project:import-style-guide', async (event) => {
   const result=await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender),{
@@ -34,6 +41,7 @@ const { validateProject } = require('./project-validation');
 
 const isDev = process.argv.includes('--dev');
 const frontendFiles = ['index.html', 'styles.css', 'renderer.js', 'studio.js', 'style-guide.js', 'preload.js'];
+// The actual loaded/saved filename is independent of the editable project title.
 let projectPath = null;
 ipcMain.on('project:validate', (event, project) => {
   try { validateProject(project);event.returnValue=null; } catch(error){event.returnValue=error.message;}
@@ -45,10 +53,11 @@ ipcMain.on('project:autosave', (event, project) => {
   try {
     if (!projectPath || isTemplate(projectPath)) { event.returnValue={saved:false}; return; }
     validateProject(project);
-    const temporary=projectPath+'.tmp';
+    const backup=projectPath+'.bak';
+    const temporary=backup+'.tmp';
     fs.writeFileSync(temporary,JSON.stringify(project,null,2)+'\n');
-    fs.renameSync(temporary,projectPath);
-    event.returnValue={saved:true};
+    fs.renameSync(temporary,backup);
+    event.returnValue={saved:true,path:backup};
   } catch(error) { event.returnValue={saved:false,error:error.message}; }
 });
 async function prepareChange(sender) {
@@ -116,6 +125,10 @@ ipcMain.handle('project:new', async (event) => { if(!await prepareChange(event.s
 ipcMain.handle('project:open', (event, file) => openProject(BrowserWindow.fromWebContents(event.sender), file));
 
 function installMenu(win) {
+  const openHelpLink = url => {
+    void openExternalLink(url, { openExternal: target => shell.openExternal(target) })
+      .catch(error => dialog.showErrorBox('Could not open browser', error.message));
+  };
   const template = [
     {
       label: 'File',
@@ -135,8 +148,8 @@ function installMenu(win) {
     {
       label: 'Help',
       submenu: [
-        { label: 'Github', click: () => shell.openExternal('https://github.com/TheCyaniteProject/ghostwriter') },
-        { label: 'Report an Issue', click: () => shell.openExternal('https://github.com/TheCyaniteProject/ghostwriter/issues') }
+        { label: 'GitHub', click: () => openHelpLink('https://github.com/TheCyaniteProject/ghostwriter') },
+        { label: 'Report an Issue', click: () => openHelpLink('https://github.com/TheCyaniteProject/ghostwriter/issues') }
       ]
     }
   ];
@@ -215,19 +228,34 @@ ipcMain.handle('project:save', async (_event, { mode, project }) => {
     let target = useSaveAs ? null : projectPath;
     if (useSaveAs) {
       const filename = projectFilename(project.title);
+      const defaultPath = path.join(
+        projectPath && !isTemplate(projectPath) ? path.dirname(projectPath) : app.getPath('documents'),
+        filename
+      );
+      console.log('[project:save] Opening save dialog', {
+        mode, defaultPath,
+        portalRequiredVersion: app.commandLine.getSwitchValue('xdg-portal-required-version')
+      });
       const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(_event.sender), {
         title: 'Save Project As',
-        defaultPath: projectPath && !isTemplate(projectPath) ? path.join(path.dirname(projectPath), filename) : filename,
+        defaultPath,
         filters: [{ name: 'Ghostwriter Project', extensions: ['ghostwriter'] }]
       });
-      if (result.canceled || !result.filePath) return { canceled: true };
+      console.log('[project:save] Dialog result:', JSON.stringify(result, null, 2));
+      if (result.canceled || !result.filePath) {
+        console.log('[project:save] Skipping write: dialog canceled or filePath missing.');
+        return { canceled: true };
+      }
       target = await resolveSaveTarget(result.filePath, project.title);
     }
+    console.log('[project:save] Writing project to:', target);
     await writeProjectAtomically(target, project);
+    console.log('[project:save] Write succeeded:', target);
     projectPath = target;
     try { await rememberProject(target, project); } catch { /* The project is saved even if recent-project metadata fails. */ }
     return { canceled: false, path: target };
   } catch (error) {
+    console.error('[project:save] Save failed:', error);
     dialog.showErrorBox(mode === 'template' ? 'Could not save template' : 'Could not save project', error.message);
     return { canceled: true, error: error.message };
   }

@@ -67,6 +67,13 @@ A front-end Electron prototype for visually arranging story arcs, beats, and ref
 
 ## Run
 
+Save keeps the loaded or previously saved filename even when you change the
+project title. Save As chooses a new filename. Autosave writes a separate
+`<filename>.ghostwriter.bak` file beside the project, leaving the main project
+file unchanged until you choose Save. New projects need an initial Save before
+autosave has a destination. To recover a backup, copy it to a filename ending
+in `.ghostwriter` and open that copy.
+
 ```bash
 npm install
 npm start
