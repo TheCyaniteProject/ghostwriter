@@ -46,9 +46,10 @@ app.whenReady().then(async () => {
     const beforeAutosave = fs.readFileSync(loadedPath, 'utf8');
     const backupResult = await win.webContents.executeJavaScript(`(() => {
       document.querySelector('.document-title input').value='A different title';
-      return window.ghostwriter.autosave(serializeProject());
+      return autosaveCurrent();
     })()`);
     assert.equal(backupResult.path, loadedPath + '.bak');
+    assert.equal(await win.webContents.executeJavaScript('document.title'), 'Ghostwriter - A different title *Unsaved', 'backup does not clear the unsaved marker');
     assert.equal(fs.readFileSync(loadedPath, 'utf8'), beforeAutosave, 'autosave preserves the primary file');
     assert.equal(JSON.parse(fs.readFileSync(loadedPath + '.bak', 'utf8')).title, 'A different title');
     const callsBeforeSave = dialogCalls;
@@ -56,6 +57,12 @@ app.whenReady().then(async () => {
     assert.equal(saveResult.path, loadedPath, 'Save reuses the loaded filename');
     assert.equal(dialogCalls, callsBeforeSave, 'Save does not open a new dialog');
     assert.equal(JSON.parse(fs.readFileSync(loadedPath, 'utf8')).title, 'A different title');
+    win.webContents.send('project:request-save', 'save');
+    for(let attempt=0;attempt<100;attempt++){
+      if(await win.webContents.executeJavaScript('document.title')==='Ghostwriter - A different title')break;
+      await new Promise(resolve=>setTimeout(resolve,25));
+    }
+    assert.equal(await win.webContents.executeJavaScript('document.title'), 'Ghostwriter - A different title', 'manual save clears the marker');
     dialogPath = path.join(directory, 'save-as-name.ghostwriter');
     const saveAsResult = await win.webContents.executeJavaScript(`window.ghostwriter.saveProject('save-as',serializeProject())`);
     assert.equal(saveAsResult.path, dialogPath);

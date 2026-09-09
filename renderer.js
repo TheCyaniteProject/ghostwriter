@@ -342,7 +342,7 @@ function renderStoryPanel(){
   rail.innerHTML=chapters.map(chapter=>`<button data-chapter="${chapter.id}" title="${esc(chapter.name)}">${esc(chapter.name)}</button>`).join('');
   reader.innerHTML=`<span class="reader-kicker">Manuscript</span><h2>${esc(document.querySelector('.document-title input').value)}</h2>${chapters.length?chapters.map(chapter=>`<article class="story-chapter" id="${chapter.id}" data-arc-id="${chapter.arc.id}" data-chapter-index="${chapter.index}"><h3>${esc(chapter.name)}</h3><span class="chapter-arc">${esc(chapter.arc.title)}</span><p>${esc(chapter.content??'')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to see them in your story.</p>'}`;
   document.querySelector('#focus-reader-nav').innerHTML=chapters.map(chapter=>`<button data-focus-chapter="focus-${chapter.id}">${esc(chapter.name)}</button>`).join('');
-  document.querySelector('#focus-reader-content').innerHTML=`<h1>${esc(document.querySelector('.document-title input').value)}</h1>${chapters.length?chapters.map(chapter=>`<article class="focus-reader-chapter" id="focus-${chapter.id}"><h2>${esc(chapter.name)}</h2><span>${esc(chapter.arc.title)}</span><p>${esc(chapter.content??'')}</p></article>`).join(''):'<p class="story-empty">Add named chapters to begin reading.</p>'}`;
+  document.querySelector('#focus-reader-content').innerHTML=`<h1>${esc(document.querySelector('.document-title input').value)}</h1>${chapters.length?chapters.map(chapter=>`<article class="focus-reader-chapter" id="focus-${chapter.id}"><h2>${esc(chapter.name)}</h2><div class="markdown-body">${storyMarkdown.render(chapter.content??'')}</div></article>`).join(''):'<p class="story-empty">Add named chapters to begin reading.</p>'}`;
   const renderArc=arc=>`<div class="outline-arc"><button class="outline-row outline-arc-row" data-focus-node="${arc.id}"><span class="outline-icon">${arc.id===sourceArcId?'★':'A'}</span>${esc(arc.title)}</button>${chaptersForArc(arc).map(chapter=>{const chapterId=chapters.find(item=>item.arc.id===arc.id&&item.name===chapter.name)?.id;return`${chapterId?`<button class="outline-row outline-chapter-row" data-open-chapter="${chapterId}"><span class="outline-icon">§</span>${esc(chapter.name)}</button>`:`<div class="outline-row outline-chapter-row"><span class="outline-icon">§</span>${esc(chapter.name)}</div>`}${chapter.beats.length?chapter.beats.map(beat=>`<button class="outline-row outline-beat-row" data-focus-node="${arc.id}" data-beat-id="${beat.id}"><span class="outline-icon">◆</span>${esc(beat.text)}</button>`).join(''):'<div class="outline-empty">No beats</div>'}`}).join('')}</div>`;
   outline.innerHTML=groups.connected.map(renderArc).join('')+(groups.disconnected.length?`<div class="outline-section-label">No Connections</div>${groups.disconnected.map(renderArc).join('')}`:'');
   if(typeof addDictionaryStudioLinks==='function')addDictionaryStudioLinks();
@@ -441,15 +441,23 @@ document.querySelector('#export-form').onsubmit=async e=>{
   try{
     const result=await window.ghostwriter.exportStory(document.querySelector('#export-format').value,story);
     status.textContent=result.error|| (result.canceled?'Export canceled.':'Story saved to '+result.path);
+    if(!result.error&&!result.canceled&&result.path)exportDialog.close();
   }catch(error){status.textContent='Could not export story: '+error.message;}
   finally{exportBusy=false;exportDialog.querySelectorAll('button,select').forEach(el=>el.disabled=false);}
 };
 let lastSavedState='';
+let lastBackupState='';
 let observedProjectState='';
 let autosaveTimer=null;
 function projectState(){const project=serializeProject();delete project.savedAt;return JSON.stringify(project);}
+function updateWindowTitle(state=projectState()){
+  const title=hasProject?(document.querySelector('.document-title input').value.trim()||'Untitled Document'):'Untitled Document';
+  document.title='Ghostwriter - '+title+(hasProject&&state!==lastSavedState?' *Unsaved':'');
+}
 function markProjectSaved(state){
   lastSavedState=state;
+  lastBackupState='';
+  updateWindowTitle();
   // A save dialog may remain open while further edits are made. Only clear
   // the pending autosave if the acknowledged snapshot is still current.
   if(projectState()===state){
@@ -460,6 +468,7 @@ function markProjectSaved(state){
 function scheduleAutosave(){
   if(!hasProject)return;
   const state=projectState();
+  updateWindowTitle(state);
   if(state===observedProjectState)return;
   observedProjectState=state;
   clearTimeout(autosaveTimer);
@@ -474,9 +483,11 @@ function autosaveCurrent(){
   clearTimeout(autosaveTimer);autosaveTimer=null;
   if(!hasProject)return {saved:true};
   const state=projectState();
+  updateWindowTitle(state);
   if(state===lastSavedState)return {saved:true};
+  if(state===lastBackupState)return {saved:true};
   const result=window.ghostwriter?.autosave(serializeProject())||{saved:false};
-  if(result.saved)markProjectSaved(state);
+  if(result.saved)lastBackupState=state;
   return result;
 }
 window.prepareProjectChange=()=>{
@@ -500,7 +511,7 @@ for(const eventName of ['input','change','click','contextmenu','pointermove','po
 }
 document.querySelector('.document-title input').addEventListener('input',renderStoryPanel);
 const home=document.querySelector('#project-home');
-function enterProject(){clearTimeout(autosaveTimer);autosaveTimer=null;hasProject=true;home.hidden=true;document.querySelector('.app-shell').inert=false;renderStoryPanel();applyTransform();observedProjectState=projectState()}
+function enterProject(){clearTimeout(autosaveTimer);autosaveTimer=null;hasProject=true;home.hidden=true;document.querySelector('.app-shell').inert=false;renderStoryPanel();applyTransform();observedProjectState=projectState();updateWindowTitle(observedProjectState)}
 async function showProjectHome(){
   home.hidden=false;document.querySelector('.app-shell').inert=true;
   document.querySelector('#home-resume').hidden=!hasProject;
@@ -537,6 +548,7 @@ document.querySelectorAll('[data-template]').forEach(button=>button.addEventList
   if(await window.ghostwriter?.newProject()===false)return;
   nodes=[];connections=[];sourceArcId=null;styleGuide='';nextId=1;content.replaceChildren();pan={x:0,y:0};zoom=1;
   lastSavedState='';
+  lastBackupState='';
   document.querySelector('.document-title input').value='Untitled Project';
   addNode('arc',80,80,{title:'Source Arc'});
   enterProject();
@@ -556,4 +568,5 @@ window.ghostwriter?.onSaveRequested(async mode=>{
     if(!result.canceled&&!result.error&&mode!=='template')markProjectSaved(state);
   }catch(error){window.alert('Could not save project: '+error.message);}
 });
-window.ghostwriter?.onProjectLoaded(project=>{try{loadProject(project);enterProject();markProjectSaved(projectState())}catch(error){window.alert(error.message)}});
+window.ghostwriter?.onProjectLoaded((project,metadata)=>{try{loadProject(project);lastSavedState='';lastBackupState='';enterProject();if(metadata?.saved!==false)markProjectSaved(projectState())}catch(error){window.alert(error.message)}});
+updateWindowTitle();

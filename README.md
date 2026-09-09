@@ -2,6 +2,13 @@
 
 ## Chapter Studio and generation
 
+Chapter bodies support Markdown. In Chapter Studio's Draft tab, use **Preview**
+to read formatted prose or **Edit Markdown** to edit its source. The popup Reader
+also renders Markdown; the regular Story panel and all other text views show
+the raw source. Previewing does not change or publish a draft. Markdown exports
+preserve the source formatting. Raw HTML is displayed as text, links are inert,
+and images display their alt text without loading files or remote resources.
+
 Choose **Write Chapters…** at the bottom of an Arc or in its context menu.
 Create a chapter, then drag (or click) Beats into its Plan and type directions
 between the blocks. A Beat can belong to only one chapter; transferring it asks

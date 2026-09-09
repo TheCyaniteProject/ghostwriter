@@ -56,7 +56,7 @@ ipcMain.handle('llm:generate', async (event, request) => {
 const { validateProject } = require('./project-validation');
 
 const isDev = process.argv.includes('--dev');
-const frontendFiles = ['index.html', 'styles.css', 'renderer.js', 'studio.js', 'style-guide.js', 'preload.js'];
+const frontendFiles = ['index.html', 'styles.css', 'markdown.js', 'renderer.js', 'studio.js', 'style-guide.js', 'preload.js'];
 // The actual loaded/saved filename is independent of the editable project title.
 let projectPath = null;
 ipcMain.on('project:validate', (event, project) => {
@@ -104,7 +104,7 @@ ipcMain.handle('project:template', async (event, file) => {
     validateProject(project);
     if (!await prepareChange(event.sender)) return;
     projectPath = null;
-    event.sender.send('project:loaded', project);
+    event.sender.send('project:loaded', project, {saved:false});
   } catch (error) { dialog.showErrorBox('Could not open template', error.message); }
 });
 const recentPath = () => path.join(app.getPath('userData'), 'recent-projects.json');

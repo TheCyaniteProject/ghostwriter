@@ -18,5 +18,5 @@ contextBridge.exposeInMainWorld('ghostwriter', {
   onProjectMenu: (callback) => ipcRenderer.on('project:home', callback),
   onSaveRequested: (callback) => ipcRenderer.on('project:request-save', (_event, mode) => callback(mode)),
   saveProject: (mode, project) => ipcRenderer.invoke('project:save', { mode, project }),
-  onProjectLoaded: (callback) => ipcRenderer.on('project:loaded', (_event, project) => callback(project))
+  onProjectLoaded: (callback) => ipcRenderer.on('project:loaded', (_event, project, metadata) => callback(project, metadata))
 });

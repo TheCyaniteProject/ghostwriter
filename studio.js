@@ -24,7 +24,7 @@ studio.innerHTML=`<section class="chapter-studio" role="dialog" aria-modal="true
 <main class="studio-main"><div id="studio-empty">Create a chapter to start planning.</div><div id="studio-fields" hidden>
 <input id="studio-title" aria-label="Chapter title" placeholder="Chapter name"><nav class="studio-tabs"><button id="studio-plan-tab" class="active">Plan</button><button id="studio-draft-tab">Draft</button></nav>
 <div id="studio-plan-view"><p class="studio-help">Arrange Beat blocks and type directions between them. Remove a block to release its Beat.</p><div id="studio-plan" contenteditable="true" role="textbox" aria-label="Chapter plan" aria-multiline="true"></div></div>
-<div id="studio-draft-view" hidden><label>Previous drafts <select id="studio-history"><option value="">Current draft</option></select></label><textarea id="studio-draft" aria-label="Chapter draft" placeholder="Generate a draft or write here…"></textarea><div class="studio-draft-footer"><span id="studio-word-count"></span><button id="studio-accept">Use draft in Story</button></div></div>
+<div id="studio-draft-view" hidden><label>Previous drafts <select id="studio-history"><option value="">Current draft</option></select></label><div class="draft-mode-controls" role="group" aria-label="Draft display"><button id="studio-preview-mode" aria-pressed="true">Preview</button><button id="studio-edit-mode" aria-pressed="false">Edit Markdown</button></div><div id="studio-draft-preview" class="markdown-body" role="region" aria-label="Rendered chapter draft" tabindex="0"></div><textarea id="studio-draft" hidden aria-label="Chapter draft Markdown" placeholder="Generate a draft or write Markdown here…"></textarea><div class="studio-draft-footer"><span id="studio-word-count"></span><button id="studio-accept">Use draft in Story</button></div></div>
 <section class="studio-attachments"><h3>Attachments</h3><div id="studio-refs"></div></section></div></main>
 <aside class="studio-settings"><h3>Generation</h3><label>Model<select id="studio-model"></select></label><p id="studio-endpoint" class="studio-help"></p><button id="studio-reload-models">Reload model configuration</button><label>Minimum words<input id="studio-words" type="number" min="50" max="10000" value="200"></label><fieldset class="studio-boundaries"><legend>Chapter boundaries</legend><label><input id="studio-previous-context" type="checkbox"> Previous Arc Beats</label><small id="studio-previous-name"></small><label><input id="studio-next-context" type="checkbox"> Next Arc Beats</label><small id="studio-next-name"></small><p class="studio-help">Context only: these events will not be written into this chapter.</p></fieldset><details><summary>Generation instructions</summary><textarea id="studio-prompt" aria-label="Generation instructions"></textarea><button id="studio-reset-prompt">Reset instructions</button></details><button id="studio-generate" class="share-button">Generate Draft</button><button id="studio-cancel" hidden>Cancel generation</button><p id="studio-status" role="status"></p></aside></section>`;
 document.body.append(studio);
@@ -128,7 +128,16 @@ function drawStudioReferences(){
   if(!sq('refs').children.length)sq('refs').textContent='Drop a Reference into the chapter to attach it.';
 }
 function drawDraftHistory(){sq('history').replaceChildren(new Option('Current draft',''));(studioChapter.history||[]).forEach((draft,i)=>sq('history').append(new Option('Draft '+(i+1)+' · '+new Date(draft.date).toLocaleString(),String(i))));}
-function updateWordCount(){sq('word-count').textContent=sq('draft').value.trim().split(/\s+/u).filter(Boolean).length+' words';}
+function updateWordCount(){sq('word-count').textContent=sq('draft').value.trim().split(/\s+/u).filter(Boolean).length+' words';if(!sq('draft-preview').hidden)renderDraftPreview();}
+function renderDraftPreview(){sq('draft-preview').innerHTML=storyMarkdown.render(sq('draft').value)||'<p class="studio-help">Generate a draft or choose Edit Markdown to start writing.</p>';}
+function setDraftMode(edit){
+  if(studioBusy)return;
+  sq('draft').hidden=!edit;sq('draft-preview').hidden=edit;
+  sq('edit-mode').setAttribute('aria-pressed',String(edit));sq('preview-mode').setAttribute('aria-pressed',String(!edit));
+  if(edit)sq('draft').focus();else renderDraftPreview();
+}
+sq('preview-mode').onclick=()=>setDraftMode(false);
+sq('edit-mode').onclick=()=>setDraftMode(true);
 function setStudioBusy(busy){studioBusy=busy;sq('generate').hidden=busy;sq('generate').disabled=busy||!studioChapter;sq('cancel').hidden=!busy;sq('add').disabled=busy;sq('plan').contentEditable=String(!busy);for(const id of ['title','draft','accept','history','words','prompt','model','reset-prompt','reload-models'])sq(id).disabled=busy;sq('plan').querySelectorAll('button').forEach(b=>b.disabled=busy);sq('refs').querySelectorAll('button').forEach(input=>input.disabled=busy||!studioChapter);drawStudioLists();drawBoundaryControls();}
 sq('add').onclick=()=>{commitChapterTitle();let i=studioArc.chapters.length+1;while(studioArc.chapters.some(c=>c.name==='Chapter '+i))i++;studioChapter={id:uid('chapter'),name:'Chapter '+i,content:'',plan:[],wordCount:200};studioArc.chapters.push(studioChapter);studioChanged();drawStudio();sq('title').focus();sq('title').select();};
 sq('title').onchange=commitChapterTitle;sq('close').onclick=closeStudio;
@@ -175,7 +184,7 @@ const warning=document.createElement('div');warning.id='llm-warning';warning.cla
 const retry=document.createElement('button');retry.textContent='Recheck API key';retry.id='llm-recheck';document.querySelector('.home-api').append(warning,retry);
 async function checkLLMKey(){warning.hidden=false;warning.textContent='Checking OpenAI connection…';retry.disabled=true;try{const status=await window.ghostwriter.llmKeyStatus();warning.textContent=status.message;warning.hidden=status.state==='valid';}catch{warning.textContent='Unable to check the OpenAI connection.';}finally{retry.disabled=false;}}
 retry.onclick=checkLLMKey;checkLLMKey();
-for(const target of [sq('draft'),sq('refs')]){
+for(const target of [sq('draft'),sq('draft-preview'),sq('refs')]){
   target.addEventListener('dragover',e=>{if(!studioBusy&&e.dataTransfer.types.includes('application/x-studio-reference'))e.preventDefault();});
   target.addEventListener('drop',e=>{e.preventDefault();if(!studioBusy)attachStudioReference(e.dataTransfer.getData('application/x-studio-reference'));});
 }
